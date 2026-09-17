@@ -1,4 +1,4 @@
-# ⭐ ReviewFlow AI v3.8.0
+# ⭐ ReviewFlow AI v3.9.0
 
 **Plataforma SaaS multi-tenant para centralizar opiniones reales (Google · Trustpilot · Tiendas),
 responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
@@ -6,9 +6,9 @@ responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
 - ✅ **IA medida de verdad**: todas las llamadas pasan por `lib/openai.ts` con **`gpt-4o-mini`**,
   timeout, reintentos con backoff exponencial, rate limit por empresa, semáforo de concurrencia,
   fallback local y **contabilidad de tokens y coste** por empresa (`ai_interactions` + `usage_counters`).
-  Cada plan tiene su **presupuesto de tokens** (30.000 / 250.000 / 1.200.000 al mes): la IA nunca
+  Cada plan tiene su **presupuesto de tokens** (250.000 / 1.200.000 al mes): la IA nunca
   puede generar una factura sorpresa.
-- ✅ **3 planes y nada más**: **Gratuito (0 €)** sin tarjeta, **Pro (29 €)** y **Business (79 €)**.
+- ✅ **2 planes 100 % de pago y nada más**: **Pro (29 €)** y **Business (79 €)**, ambos con **7 días de prueba gratis** con tarjeta. Sin suscripción activa (o con la prueba caducada), panel y APIs responden **402**.
   Cada plan define 4 cuotas mensuales claras (peticiones, opiniones, IA, sincronizaciones) y
   **topes de base de datos** por empresa (opiniones guardadas, auditoría, conexiones, MB).
 - ✅ **Cuotas reales aplicadas en servidor**: cada petición enviada, opinión importada, respuesta
@@ -26,7 +26,7 @@ responderlas con IA, pedirlas por email/WhatsApp y cobrar por uso medible.**
 - ✅ **`/admin` 100 % privado**: el panel interno ya **no se menciona en ninguna página pública**
   (login, registro, landing, ayuda o dashboard). Sigue protegido por `middleware.ts` +
   `lib/authz.ts` y solo entra quien tiene su email en `SUPERADMIN_EMAILS`.
-- ✅ **UX clara**: landing en 3 pasos, comparativa de los 3 planes, medidores de cuota
+- ✅ **UX clara**: landing en 3 pasos, comparativa de los 2 planes, medidores de cuota
   (verde <70 %, ámbar 70–90 %, rojo >90 %), panel de uso con recargas sugeridas y paywall amable.
 - ✅ **Funciona en CUALQUIER hosting**: Docker, VPS, Coolify, Vercel, Render, Railway, Fly.io o Node.js puro.
 - ✅ **Integraciones reales**: Google Business Profile (OAuth + publicación), Google Places,
@@ -49,7 +49,8 @@ Docker / cualquier hosting Node.
                                     │ fetch (siempre JSON + códigos 4xx claros)
 ┌───────────────────────────────────▼──────────────────────────────────────────────────┐
 │                        NEXT.JS SERVER (App Router · API Routes)                       │
-│  middleware.ts: sesión, /admin solo SUPERADMIN, /api/ai sin sesión → 401              │
+│  middleware.ts: /admin solo SUPERADMIN · /dashboard y /api/ai|reviews|integrations    │
+│  exigen suscripción (panel → /bienvenido · APIs → 402 Payment Required)            │
 │  lib/usage.ts  → PUERTA ÚNICA: suscripción 402 · feature 403 · cuota 429 · BD 507     │
 │  lib/ai.ts     → IA de negocio (respuestas y triaje) + contabilidad por empresa       │
 │  lib/openai.ts → cliente centralizado: gpt-4o-mini, timeout, reintentos, rate limit   │
@@ -66,7 +67,7 @@ Docker / cualquier hosting Node.
 
 ```
 POST /api/ai
-  → middleware.ts ......... ¿sesión?                (si no → 401 JSON)
+  → middleware.ts ......... ¿sesión? (401) · ¿suscripción? (402 si no hay plan de pago o caducó el trial)
   → membresía de empresa .. ¿es tu empresa?          (si no → 403)
   → lib/usage.enforceAi ... ¿suscripción? (402) · ¿feature? (403)
                             · ¿créditos de IA? (429) · ¿tokens? (429) · ¿tope de filas? (507)
@@ -80,11 +81,12 @@ POST /api/ai
 
 | Guía | Para qué | Coste |
 |---|---|---|
-| **[GUIA_GRATIS.md](./GUIA_GRATIS.md)** 🆓 | Explicación comercial de los 3 planes + montar el proyecto gratis (Vercel + Supabase + Stripe **test** + Brevo) | **0 €** |
+| **[GUIA_GRATIS.md](./GUIA_GRATIS.md)** 🆓 | Explicación comercial de los 2 planes + montar el proyecto gratis (Vercel + Supabase + Stripe **test** + Brevo) | **0 €** |
 | **[GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md)** 🚀 | Desplegar desde cero (dominio, DNS, SSL, Docker) | Según host |
 | **[GUIA_ADMIN.md](./GUIA_ADMIN.md)** 🛡️ | Manual del dueño: planes, cuotas, **topes de BD por plan**, purga, cobros y operación diaria | — |
 | **[docs/GUIA_GENERAL.md](./docs/GUIA_GENERAL.md)** 🌍 | Publicar en producción en **cualquier host** | Según host |
 | **[docs/GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md)** 🧑‍💻 | **Lista exacta de credenciales**, formato del `.env`, productos de Stripe, Supabase, OpenAI, Meta WhatsApp, Google y troubleshooting | — |
+| **[GUIA_COMERCIALIZACION.md](./GUIA_COMERCIALIZACION.md)** 💰 | **Todo lo que TÚ debes aportar para vender al público**: empresa, dominio, Stripe live, SMTP, marca, integraciones en producción, legal RGPD/consumo, seguridad, soporte y checklist go-live | — |
 
 > 💡 Para el cliente: la ayuda de día a día está **dentro del panel** (botón «Ayuda»): FAQs
 > desplegables condensadas. Las guías extensas viven en `docs/`, fuera de la vista principal.
@@ -93,11 +95,11 @@ POST /api/ai
 
 ```bash
 # 1) Clona y prepara el entorno
-git clone https://github.com/diegowebsia/prueba-4.git && cd prueba-4
+git clone https://github.com/diegowebsia/prueba-6.git && cd prueba-6
 cp .env.example .env                       # pega tus claves (tabla completa: docs/GUIA_PASOS_MANUALES.md)
 
 # 2) Crea la base de datos: Supabase → SQL Editor → pega supabase/schema.sql → Run
-#    (proyecto existente: migration_3_7_0.sql y después migration_3_8_0.sql)
+#    (proyecto existente: migration_3_7_0.sql → migration_3_8_0.sql → migration_3_9_0.sql)
 
 # 3) Arranca
 npm install
@@ -133,21 +135,25 @@ npm run verify
 
 ## 💶 Planes y cuotas (fuente de verdad: `lib/plans.ts`)
 
-| | 🟢 **Gratuito** | 🔵 **Pro** | 🟣 **Business** |
-|---|---|---|---|
-| Precio | **0 €/mes** (sin tarjeta) | **29 €/mes** (7 días gratis) | **79 €/mes** (7 días gratis) |
-| Peticiones de opiniones / mes | 50 | **500** | **2.000** |
-| Opiniones importadas / mes | 100 | **1.000** | **5.000** |
-| Respuestas con IA / mes | 30 | **300** | **1.500** |
-| Sincronizaciones automáticas / mes | 30 | **120** | **720** |
-| Sedes incluidas | 1 | 3 | 10 |
-| Opiniones guardadas (tope BD) | 500 | 5.000 | 25.000 |
-| Auditoría · conexiones · retención | 2.000 · 2 · 30 d | 10.000 · 6 · 180 d | 50.000 · 20 · 365 d |
-| Almacenamiento asignado | 250 MB | 2 GB | 10 GB |
-| Email · Google Business/Places · IA · filtro privado | ✅ | ✅ | ✅ |
-| WhatsApp (peticiones y alertas) · Trustpilot · publicar en Google | — | ✅ | ✅ |
-| Tienda (Shopify/Woo/TPV) + WhatsApp al entregar | — | — | ✅ |
-| Soporte | Comunidad | Email | Prioritario |
+| | 🔵 **Pro** | 🟣 **Business** |
+|---|---|---|
+| Precio | **29 €/mes** (7 días de prueba gratis con tarjeta) | **79 €/mes** (7 días de prueba gratis con tarjeta) |
+| Peticiones de opiniones / mes | **500** | **2.000** |
+| Opiniones importadas / mes | **1.000** | **5.000** |
+| Respuestas con IA / mes | **300** | **1.500** |
+| Presupuesto de IA / mes | 250.000 tokens | 1.200.000 tokens |
+| Sincronizaciones automáticas / mes | **120** | **720** |
+| Sedes incluidas | 3 | 10 |
+| Opiniones guardadas (tope BD) | 5.000 | 25.000 |
+| Auditoría · conexiones · retención | 10.000 · 6 · 180 d | 50.000 · 20 · 365 d |
+| Almacenamiento asignado | 2 GB | 10 GB |
+| Email · Google Business/Places · IA · filtro privado | ✅ | ✅ |
+| WhatsApp (peticiones y alertas) · Trustpilot · publicar en Google | ✅ | ✅ |
+| Tienda (Shopify/Woo/TPV) + WhatsApp al entregar | — | ✅ |
+| Soporte | Email | Prioritario |
+
+> Sin plan gratuito: los 2 planes exigen suscripción activa. Sin ella (o con la prueba
+> caducada), el panel redirige a `/bienvenido` y las APIs responden **402**.
 
 **Métrica =** 1 petición enviada · 1 opinión importada · 1 respuesta de IA · 1 sincronización
 automática. Son **cuatro cuotas independientes**: agotar una no bloquea las otras.
@@ -170,9 +176,8 @@ Sin Price ID configurado, el Checkout se crea con `price_data` inline usando los
 ## 🔄 Flujo end-to-end (cero mocks)
 
 ```
-Registro → /bienvenido (3 planes)
-  · Gratuito  → POST /api/tenants/start → empresa creada al instante (sin tarjeta)
-  · Pro/Business → Stripe Checkout con prueba de 7 días (tarjeta)
+Registro → /bienvenido (2 planes de pago)
+  · Pro/Business → Stripe Checkout con prueba de 7 días (tarjeta obligatoria)
   → webhook crea/activa tenant + membresía owner en Supabase
   → /dashboard: conecta Google/Trustpilot/tienda/WhatsApp → opiniones reales
   → triaje privado ≤3★ (análisis IA + mensaje conciliador + nota interna)
@@ -187,7 +192,7 @@ Registro → /bienvenido (3 planes)
 
 | Módulo | Responsabilidad |
 |---|---|
-| `lib/plans.ts` | Catálogo comercial (client-safe): 3 planes, features, cuotas mensuales (incl. **presupuesto de tokens de IA**), **topes de BD**, `ROW_KB`, `AI_MODEL_PRICING`, `PURGE_STRATEGY`, recargas, `resolvePlan`, `hasAccess`. |
+| `lib/plans.ts` | Catálogo comercial (client-safe): **2 planes de pago** (Pro/Business, 7 días de prueba), features, cuotas mensuales (incl. **presupuesto de tokens de IA**), **topes de BD**, `ROW_KB`, `AI_MODEL_PRICING`, `PURGE_STRATEGY`, recargas, `resolvePlan`, `hasAccess`. |
 | `lib/openai.ts` | **Cliente centralizado de IA**: `gpt-4o-mini` por defecto, timeout, reintentos con backoff exponencial + jitter, rate limit por empresa, semáforo de concurrencia, `chatComplete`/`chatOnce` y estimación de coste por tokens. |
 | `lib/usage.ts` | Motor de cuota y **guardia de la base de datos**: `checkQuota`, `consume`, `enforce()` (402/403/429), `enforceTableCap()`/`enforceStorage()` (507), purga de `reviews`/`quota_events`/`system_logs`, `publicQuota`, `upgradeHints`. |
 | `lib/ingest.ts` | Importación con corte por cuota: calcula el hueco real (cuota mensual + plazas de tabla) e importa solo hasta ahí (`quotaCut`/`skipped`). |
@@ -198,15 +203,16 @@ Registro → /bienvenido (3 planes)
 | `app/api/stripe/webhook` | Suscripciones (alta/cambio/impago/cancelación) y recargas idempotentes → `tenants.extra_*` + ledger `addons`. |
 | `supabase/migration_3_7_0.sql` | 3 planes, columnas `extra_requests/extra_syncs/extra_stored`, vista recalculada y funciones `purge_reviews`, `purge_quota_events`, `purge_system_logs`, `purge_tenant`, `purge_all_tenants`. |
 | `supabase/migration_3_8_0.sql` | Contabilidad de IA (`usage_counters.ai_tokens_*`, `tenants.ai_*`, tabla `ai_interactions`, RPC `consume_ai_tokens`, vista `v_ai_usage`, purga de IA), índices de rendimiento y RLS. |
-| `middleware.ts` | Corta `/dashboard` sin acceso y `/admin` sin `SUPERADMIN_EMAILS`; redirige con `?reason=` para que la UI explique el motivo. |
+| `supabase/migration_3_9_0.sql` | Modelo 100 % de pago: planes solo `pro|business`, estados `inactive`/`paused`, migración automática de filas legacy, vistas y purgas con topes Pro por defecto. |
+| `middleware.ts` | Corta `/dashboard` sin acceso (→ `/bienvenido?reason=`), `/admin` sin `SUPERADMIN_EMAILS` y las APIs `/api/ai|reviews|integrations` sin suscripción (**402**). |
 
 ### Endpoints con control de cuota
 
 | Ruta | Consume | Bloqueo |
 |---|---|---|
 | `POST /api/reviews/respond` | 1 credito `ai` | 402/403/429 |
-| `POST /api/reviews/publish` | feature `publishToGoogle` | 403 si no está en el plan |
-| `POST /api/reviews/triage` · `/private-note` | feature `privateFilter` | 403 |
+| `POST /api/reviews/publish` | suscripción + guardado (subida a Google best-effort) | 402 sin suscripción · 403 sin `publishToGoogle` en la subida |
+| `POST /api/reviews/triage` · `/private-note` | suscripción + feature `privateFilter` | 402 sin suscripción · 403 sin la feature |
 | `POST /api/integrations/google/sync` | `syncs` + 1 crédito `reviews` por opinión | 429 · 507 |
 | `POST /api/integrations/trustpilot/sync` | 1 crédito `reviews` por opinión | 429 · 507 |
 | `POST /api/integrations/ingest` | feature `publicApi` + 1 crédito `reviews` por opinión | 403 · 429 · 507 (parcial: importa hasta el hueco) |
@@ -221,7 +227,7 @@ Registro → /bienvenido (3 planes)
 
 ---
 
-## 🎨 Sistema de diseño v3.8.0
+## 🎨 Sistema de diseño v3.9.0
 
 - **Fondo** `#090D16` (`ink-950`) con escala propia `ink-50…950`, acento `brand` (azul #2563eb →
   #5f92fb) y violeta de apoyo; nunca negro puro ni blanco puro.
@@ -241,8 +247,8 @@ Registro → /bienvenido (3 planes)
 | Área | Estado | Detalle |
 |---|---|---|
 | 🖥️ Web comercial multipágina | ✅ | Landing + `/sobre-nosotros` + `/contacto` + 4 legales, estética dark premium |
-| 💳 3 planes + Stripe | ✅ | Gratuito sin tarjeta, Pro/Business con prueba de 7 días, portal de facturación |
-| 📊 Precios interactivos | ✅ | Comparativa de los 3 planes + tabla de límites + recargas con precio real |
+| 💳 2 planes de pago + Stripe | ✅ | Pro/Business con prueba de 7 días y tarjeta obligatoria, portal de facturación, 402 estricto |
+| 📊 Precios interactivos | ✅ | Comparativa de los 2 planes + tabla de límites + recargas con precio real |
 | 🧮 Motor de cuotas | ✅ | 4 contadores por ciclo, RPC `consume_quota`, auditoría en `quota_events` |
 | 🧠 IA medida por tokens | ✅ | `lib/openai.ts` (gpt-4o-mini + reintentos + rate limit), `ai_interactions`, presupuesto por plan y fallbacks locales |
 | 🔌 Pool de PostgreSQL | ✅ | `lib/db.ts` contra el Connection Pooler, diagnóstico `?db=1` y mantenimiento |
@@ -256,7 +262,7 @@ Registro → /bienvenido (3 planes)
 | 🛡️ Filtro privado IA | ✅ | Quejas ≤3★ a gestión privada: análisis, mensaje conciliador y nota interna |
 | 🛡️ Panel interno `/admin` | ✅ | Empresas, MRR, suscripciones, cuotas y recargas, logs, estado de integraciones · **privado** |
 | 🧱 Middleware de seguridad | ✅ | `/admin` solo `SUPERADMIN_EMAILS`; `/dashboard` con suscripción/plan activo |
-| 🗄️ Esquema BD + RLS + índices | ✅ | `supabase/schema.sql` + migraciones 3.2 → **3.8** (RLS en todas las tablas de cliente, índices en las clave) |
+| 🗄️ Esquema BD + RLS + índices | ✅ | `supabase/schema.sql` + migraciones 3.2 → **3.9** (RLS en todas las tablas de cliente, índices en las clave) |
 | 🤖 Respuestas IA | ✅ | `gpt-4o-mini` si hay clave, plantilla local/heurística si no (nunca falla) |
 | ✅ Verificación previa | ✅ | `npm run verify`: health, IA, BD, firma del webhook y rutas protegidas |
 | 📧 SMTP + contacto | ✅ | Proveedor agnóstico + formulario `/contacto` funcional |
@@ -289,12 +295,12 @@ Registro → /bienvenido (3 planes)
 ├── lib/                 plans · usage · openai · db · ingest · stripe · ai · google ·
 │                        trustpilot · whatsapp · store · maps · mail · auth · env · logger ·
 │                        demo · site
-├── supabase/            schema.sql + migration_3_2_0 … migration_3_8_0.sql
+├── supabase/            schema.sql + migration_3_2_0 … migration_3_9_0.sql
 ├── scripts/             verify-launch.mjs (npm run verify)
 ├── docs/                GUIA_GENERAL.md · GUIA_PASOS_MANUALES.md (guías extensas, fuera del cliente)
 ├── public/              logo.svg · favicon.svg
 ├── middleware.ts        corte de acceso por plan/suscripción y rol
-└── GUIA_GRATIS / GUIA_DESPLIEGUE / GUIA_ADMIN · README.md · CHANGELOG.md
+└── GUIA_GRATIS / GUIA_DESPLIEGUE / GUIA_ADMIN / GUIA_COMERCIALIZACION · README.md · CHANGELOG.md
 ```
 
 ## 🔒 Seguridad y privacidad del panel

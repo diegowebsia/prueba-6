@@ -1,5 +1,48 @@
 # Changelog — ReviewFlow AI
 
+## v3.9.0 (2026-09-17) — Modelo 100 % de pago, 402 estricto y comercialización
+
+### 💳 1. Eliminación del plan gratuito
+- **`lib/plans.ts`**: eliminado el plan `free` (0 €). Solo `pro` (29 €) y `business` (79 €);
+  `PLAN_CATALOG` y `PAID_PLAN_IDS` solo de pago; `resolvePlan()` mapea cualquier valor legacy
+  o gratuito al plan de pago más barato; `isPaidPlan()` siempre `true` (compatibilidad).
+- **Alta sin tarjeta desactivada**: `POST /api/tenants/start` responde 402 con `checkoutUrl`.
+- **UI**: `Landing`, `BillingPanel`, `/bienvenido`, `AuthForm`, contacto, dashboard, admin y ayuda
+  muestran solo planes de pago con «7 días de prueba gratis».
+- **Checkout** (`/api/stripe/checkout`): solo `pro|business`, `trial_period_days: 7` con tarjeta
+  obligatoria y pausa si falla el cobro del día 8.
+
+### 🔒 2. Restricción de acceso por suscripción (402)
+- **`lib/usage.ts`**: regla estricta — sin suscripción `active` o con prueba `trialing` caducada
+  (día 8 sin pago), `enforce()` y `enforceAi()` responden **402** (`trial_expired`/`no_subscription`).
+  Nuevo helper `requirePaidAccess()` para rutas sin consumo de cuota.
+- **`middleware.ts`**: `/api/ai/*`, `/api/reviews/*` y `/api/integrations/*` exigen sesión (401) y
+  suscripción (402). Excluidos flujos máquina-a-máquina (webhooks Shopify/Woo, ingesta y
+  pedido-entregado por `api_key`, callback OAuth de Google), con gates internos por tenant.
+- Guards por tenant añadidos en `reviews/private-note`, `reviews/publish`, `reviews/respond`
+  (con caducidad de trial) y conexiones de Google/Trustpilot/Tienda.
+
+### ⚖️ 3. Datos legales centralizados (SL y marca)
+- **`lib/site.ts`**: exportaciones `companyName`, `cif`, `address`, `supportEmail`, `domain`
+  (+ `brand`, `legalEmail`) configurables por entorno (`NEXT_PUBLIC_*`), con `.env.example` ampliado.
+- **`/aviso-legal`, `/privacidad`, `/terminos` y `Footer`**: consumen los valores dinámicamente;
+  `/terminos` reescrito sin plan gratuito y con precios/límites leídos de `lib/plans.ts`.
+
+### 🪝 4. Webhooks de Stripe con corte inmediato
+- Impago → `subscription_status = 'past_due'` **al instante** (búsqueda por suscripción + customer).
+- Cancelación/baja → `'inactive'` **al instante**; se conserva el último plan de pago (sin
+  downgrade a gratuito) y se limpia `stripe_subscription_id`; `paused` mapeado como estado propio.
+- **SQL**: `supabase/migration_3_9_0.sql` (planes solo `pro|business`, estados `inactive`/`paused`,
+  migración automática de filas legacy) + `supabase/schema.sql` actualizado (vistas y purgas con
+  topes Pro por defecto).
+
+### 📘 5. Guías de comercialización
+- **Nueva `GUIA_COMERCIALIZACION.md`**: todo lo que el dueño debe aportar para vender al público
+  (decisiones, empresa, dominio, Supabase, Stripe live, SMTP, marca, OpenAI, Google, WhatsApp,
+  legal RGPD/consumo, seguridad, soporte, checklist go-live, lanzamiento + anexos de costes).
+- Guías existentes actualizadas a v3.9.0 y al modelo de pago (`README`, `GUIA_ADMIN`,
+  `GUIA_GRATIS`, `GUIA_DESPLIEGUE`, `docs/GUIA_GENERAL`, `docs/GUIA_PASOS_MANUALES`).
+
 ## v3.8.0 (2026-09-17) — IA medida en tokens, PostgreSQL blindado y cobros verificables
 
 ### 🧠 1. Integración de IA finalizada con `gpt-4o-mini`

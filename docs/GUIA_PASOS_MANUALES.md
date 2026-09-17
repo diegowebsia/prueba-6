@@ -1,4 +1,4 @@
-# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.8.0)
+# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.9.0)
 
 Todo el código está programado, probado y con `npm run build` en verde. Esta guía lista
 **únicamente** lo que requiere tus cuentas, tus claves o tus decisiones: rellenar, pegar y clicar.
@@ -21,6 +21,7 @@ Nada de programar.
 > Despliegue (hosting, dominio, Docker, Vercel): [GUIA_GRATIS.md](../GUIA_GRATIS.md) para probar a 0 €
 > y [GUIA_GENERAL.md](./GUIA_GENERAL.md) / [GUIA_DESPLIEGUE.md](../GUIA_DESPLIEGUE.md) para producción.
 > Operación diaria del dueño: [GUIA_ADMIN.md](../GUIA_ADMIN.md).
+> Puesta en venta al público (todo lo que debes aportar tú): [GUIA_COMERCIALIZACION.md](../GUIA_COMERCIALIZACION.md).
 
 ---
 
@@ -38,6 +39,12 @@ cp .env.example .env
 |---|---|---|---|---|
 | 1 | `NEXT_PUBLIC_APP_URL` | URL pública final **sin** barra al final | Tu dominio / Vercel / `http://localhost:3000` | ✅ |
 | 2 | `PORT` | Puerto del servidor Node | — (por defecto `3000`) | ⭕ |
+| 2b | `NEXT_PUBLIC_COMPANY_NAME` | Razón social de tu S.L. (sale en footer y legales) | Tu escritura/alta de autónomo | ✅ |
+| 2c | `NEXT_PUBLIC_CIF` | CIF/NIF | Tu documentación fiscal | ✅ |
+| 2d | `NEXT_PUBLIC_ADDRESS` | Domicilio social completo | Tu domicilio fiscal | ✅ |
+| 2e | `NEXT_PUBLIC_LEGAL_EMAIL` | Email legal/RGPD (derechos ARCO, 1 mes) | Buzón que creas en tu dominio (ver §8) | ✅ |
+| 2f | `NEXT_PUBLIC_SUPPORT_EMAIL` | Email de soporte visible para clientes | Buzón que creas en tu dominio (ver §8) | ✅ |
+| 2g | `NEXT_PUBLIC_DOMAIN` | Tu dominio sin `https://` (sale en footer y legales) | Tu registrador | ✅ |
 | 3 | `SUPERADMIN_EMAILS` | Emails con acceso al panel interno (privado, nunca enlazado en la web), separados por comas | Tu email real | ✅ |
 | 4 | `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase | Supabase → Project Settings → **API** → Project URL | ✅ |
 | 5 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública `anon` (respeta RLS) | Supabase → Project Settings → **API** → `anon` `public` | ✅ |
@@ -78,6 +85,14 @@ cp .env.example .env
 # ---------- App ----------
 NEXT_PUBLIC_APP_URL=https://tudominio.com
 PORT=3000
+
+# ---------- Datos legales / empresa (salen en footer y legales) ----------
+NEXT_PUBLIC_COMPANY_NAME=Mi Empresa S.L.
+NEXT_PUBLIC_CIF=B12345678
+NEXT_PUBLIC_ADDRESS=Calle Mayor 1, 28001 Madrid, España
+NEXT_PUBLIC_LEGAL_EMAIL=legal@tudominio.com
+NEXT_PUBLIC_SUPPORT_EMAIL=soporte@tudominio.com
+NEXT_PUBLIC_DOMAIN=tudominio.com
 
 # ---------- Super-Admin ----------
 SUPERADMIN_EMAILS=tu@email.com,otro@socio.com
@@ -152,7 +167,9 @@ pública de ingesta.
    - **Proyecto nuevo** → SQL Editor → pega todo `supabase/schema.sql` → **Run**.
    - **Proyecto existente** (vienes de v3.4.0 o anterior) → ejecuta en orden
      `supabase/migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
-     `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → **`migration_3_8_0.sql`**
+     `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` →
+     **`migration_3_9_0.sql`** (modelo 100 % de pago: planes `pro|business` y estados
+     `inactive`/`paused`; migra sola las filas legacy/gratuitas a Pro)
      (todas idempotentes: puedes re-ejecutarlas sin romper nada).
 4. **Pool de conexiones (recomendado)**: Project Settings → **Database → Connection string →
    Connection pooling** → copia la URI del **puerto 6543** (Supavisor, modo *transaction*) a
@@ -162,8 +179,11 @@ pública de ingesta.
    el usuario entra directamente tras registrarse).
 5. Auth → **URL Configuration**: `Site URL` = tu `NEXT_PUBLIC_APP_URL` y añade
    `https://tudominio.com/**` a *Redirect URLs*.
-6. Verifica que la migración 3.7.0 dejó:
-   - `tenants.plan` aceptando `free | pro | business` (y los nombres legacy `trial/resenas/completo`).
+6. Verifica que la migración 3.9.0 dejó:
+   - `tenants.plan` aceptando **solo `pro | business`** (las filas legacy o gratuitas migran
+     solas al plan de pago equivalente; sin plan gratuito).
+   - `tenants.subscription_status` aceptando `trialing | active | past_due | canceled | inactive | paused | none`
+     (`inactive` = baja inmediata por webhook; `paused` = Stripe pausó el cobro del día 8).
    - Columnas de recargas: `extra_requests`, `extra_reviews`, `extra_ai`, `extra_syncs`,
      `extra_stored`, `extra_quota_cycle`.
    - Columnas `google_calls` en `usage_counters` y tabla `quota_events` (auditoría de cada consumo).
@@ -204,9 +224,8 @@ Stripe Dashboard → **Product catalog → + Add product** (repite para cada pla
 | Pro | `ReviewFlow · Pro` | `29` EUR | Mensual (every 1 month) | 7 días |
 | Business | `ReviewFlow · Business` | `79` EUR | Mensual (every 1 month) | 7 días |
 
-- El **plan Gratuito (0 €) no se crea en Stripe**: se activa al instante desde
-  `/bienvenido` (sin tarjeta) y no genera suscripción.
-- El **trial de 7 días lo aplica el código** (`trial_period_days` en `/api/stripe/checkout`);
+- **No hay plan gratuito**: los 2 planes pasan por Stripe con prueba de 7 días.
+- El **trial de 7 días lo aplica el código** (`trial_period_days: 7` en `/api/stripe/checkout`, con tarjeta obligatoria y pausa si falla el cobro del día 8);
   no hace falta configurarlo en el producto, aunque puedes definirlo también en Stripe.
 - Copia el **API ID** de cada precio (`price_…`) → `STRIPE_PRICE_PRO` y `STRIPE_PRICE_BUSINESS`.
 - Los Price ID de **test no valen en live**: al pasar a producción, recrea productos y precios y
@@ -419,19 +438,25 @@ Cada mensaje enviado consume **1 evento** del contador `whatsapp`.
 
 ## 9. Datos fiscales, logo y textos
 
-### 9.1 `lib/site.ts` (única fuente de verdad de las páginas legales)
+### 9.1 Datos fiscales por variables de entorno (única fuente de verdad)
 
-| Campo | Qué poner | Ejemplo |
+Desde v3.9.0 los datos fiscales **no se editan en código**: se configuran con las 6 variables
+`NEXT_PUBLIC_*` (ver §1.1, filas 2b–2g) y `lib/site.ts` las sirve al footer y a las páginas
+legales (`/aviso-legal`, `/privacidad`, `/terminos`, `/cookies`).
+
+| Variable | Qué poner | Ejemplo |
 |---|---|---|
-| `brand` | Nombre comercial | `ReviewFlow AI` |
-| `company` | Razón social | `Mi Empresa S.L.` |
-| `cif` | CIF/NIF | `B12345678` |
-| `address` | Domicilio social completo | `Calle Mayor 1, 28001 Madrid, España` |
-| `email` | Email legal/RGPD | `legal@tudominio.com` |
-| `supportEmail` | Email de soporte (recibe `/contacto`) | `soporte@tudominio.com` |
-| `domain` | Tu dominio | `tudominio.com` |
+| `NEXT_PUBLIC_COMPANY_NAME` | Razón social | `Mi Empresa S.L.` |
+| `NEXT_PUBLIC_CIF` | CIF/NIF | `B12345678` |
+| `NEXT_PUBLIC_ADDRESS` | Domicilio social completo | `Calle Mayor 1, 28001 Madrid, España` |
+| `NEXT_PUBLIC_LEGAL_EMAIL` | Email legal/RGPD | `legal@tudominio.com` |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Email de soporte (visible para clientes) | `soporte@tudominio.com` |
+| `NEXT_PUBLIC_DOMAIN` | Tu dominio | `tudominio.com` |
 
-- [ ] Sin `[corchetes]` pendientes → commit → redespliega.
+> El formulario `/contacto` envía a tu `SMTP_FROM` (ver §8): usa una dirección que leas.
+> Solo si cambias el **nombre comercial** (`ReviewFlow AI`) edita `brand` en `lib/site.ts`.
+
+- [ ] Sin `[corchetes]` pendientes en footer ni legales → redespliega y comprueba en el navegador.
 - [ ] Textos legales revisados por tu asesoría si lo necesitas (son plantillas, no asesoramiento jurídico).
 - [ ] Email legal operativo: los derechos RGPD se responden en **1 mes**.
 
@@ -446,7 +471,7 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 
 - [ ] Cuando tengas clientes reales: pide permiso escrito para nombre/logo y añádelos.
 - [ ] Si cambias los 29 €/79 € o los importes de las recargas (9/12/15/6 €), actualízalos **a la vez** en
-      Stripe, en `lib/plans.ts` y en los textos de `/terminos`.
+      Stripe y en `lib/plans.ts` (`/terminos` ya lee precios y límites del código automáticamente).
 
 ---
 
@@ -461,15 +486,15 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
    npm run start       # o `npm run dev`
    ```
 
-2. `GET /api/health?verbose=1` → `version: "3.8.0"` y todas las integraciones que configuraste en
+2. `GET /api/health?verbose=1` → `version: "3.9.0"` y todas las integraciones que configuraste en
    verde (`configured: true`). Si añadiste `DATABASE_URL`, comprueba también `GET /api/health?db=1`.
    Atajo: `npm run verify` lo revisa todo, incluida la firma del webhook de Stripe.
 3. Panel interno (`/admin`, privado) → **sin** banner de modo demo; pestaña *Sistema* con todas
    las integraciones en «listo», incluidos los Price ID de Pro/Business y las 4 recargas.
-4. **Flujo de alta (Gratuito)**: registro con otro email → `/bienvenido` → **Gratuito** → empresa
-   creada al instante **sin tarjeta**.
-5. **Flujo de alta (Pro/Business)**: registro → `/bienvenido` → elige Pro → Checkout con
-   `4242 4242 4242 4242` → vuelta a la app → empresa **auto-creada** y estado `trialing`.
+4. **Flujo de alta (Pro/Business, único que existe)**: registro → `/bienvenido` → solo 2 planes,
+   ambos con 7 días de prueba → elige Pro → Checkout con `4242 4242 4242 4242` → vuelta a
+   la app → empresa **auto-creada** y estado `trialing`. El alta sin tarjeta ya no existe
+   (`POST /api/tenants/start` responde 402).
 5. **Flujo de reseñas**: conecta Google o pega un Place ID → **Sincronizar** → reseñas reales en
    la bandeja → *Generar respuesta con IA* → editar → **Publicar**.
 6. **Flujo de triaje**: fuerza una reseña de ≤3★ → aparece en la cola privada con análisis de la
@@ -479,8 +504,9 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
    panel interno). Al llegar al 100 % las APIs responden `429` con cabecera `Retry-After` y el
    panel ofrece la recarga sugerida; al comprarla, la capacidad sube al instante.
 8. **Corte del día 8**: cancela la suscripción en Stripe (o deja fallar el cobro) → el webhook la
-   marca `canceled` / `past_due` → el middleware redirige a
-   `/bienvenido?reason=trial-ended` (o `past-due`) y el panel queda inaccesible sin perder datos.
+   marca `inactive` / `past_due` **al instante** → el middleware redirige a
+   `/bienvenido?reason=trial-ended` (o `past-due`), el panel queda inaccesible y las APIs
+   `/api/ai`, `/api/reviews` y `/api/integrations` responden **402**, sin perder datos.
 9. Seguridad: dominio + HTTPS, `NEXT_PUBLIC_APP_URL` final, contraseñas robustas y **2FA** en
    GitHub, Supabase, Stripe, Google Cloud, Meta y tu host.
 
@@ -491,8 +517,8 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 | Síntoma | Causa habitual | Solución |
 |---|---|---|
 | `429 Too Many Requests` al sincronizar o generar IA | Cuota del ciclo agotada | Compra un add-on (`/dashboard?tab=facturacion`) o espera al siguiente ciclo. La respuesta incluye `Retry-After` y `X-RateLimit-*`. |
-| `402 Payment Required` | Sin suscripción activa, prueba caducada o la feature no está en tu plan | Activa plan en `/bienvenido` (o pasa al Gratuito); si la feature es de otro plan, mejora de plan. |
-| `403 Forbidden` en una integración | La integración no pertenece a tu plan (p. ej. tienda/WhatsApp en Gratuito) o la empresa está suspendida | Revisa el plan en *Facturación* y la tabla de features de `lib/plans.ts`. |
+| `402 Payment Required` | Sin suscripción activa o prueba de 7 días caducada | Contrata/reactiva un plan de pago en `/bienvenido` (Pro o Business, ambos con 7 días de prueba). |
+| `403 Forbidden` en una integración | La integración no pertenece a tu plan (p. ej. la tienda requiere Business) | Revisa el plan en *Facturación* y la tabla de features de `lib/plans.ts`; si aplica, sube de plan. |
 | `507 Insufficient Storage` | La empresa alcanzó el tope de opiniones, conexiones o almacenamiento de su plan | Es la protección de la BD: compra la recarga de opiniones, desconecta una integración o sube de plan. La purga de lo más antiguo es automática. |
 | La recarga se cobra pero no sube la cuota | Webhook no llega o `STRIPE_WEBHOOK_SECRET` incorrecto | Revisa Stripe → Webhooks → intentos (error de firma = 400). En local usa `stripe listen --forward-to`. |
 | «Se han archivado opiniones» | El plan llegó a su tope de filas (`reviewsStored`) y la purga borró las más antiguas | Es el comportamiento documentado en `GUIA_ADMIN.md` §3: ofrece recarga de opiniones o plan superior. |
@@ -507,4 +533,4 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 | Se agotan las conexiones de Postgres | `DATABASE_URL` apunta al host directo, no al pooler | Usa la cadena del puerto **6543** (Supavisor, transaction) y ajusta `DATABASE_POOL_MAX`. |
 | Webhook con `400 Firma inválida` | `whsec_…` de otro endpoint o de otro modo | `GET /api/stripe/webhook` muestra el modo y las pistas, y `npm run verify` valida la firma. |
 
-🎉 Hecho: altas (Gratuito y de pago), cobros, cuotas, recargas, empresas e integraciones funcionan solos; el panel interno sirve para supervisarlos.
+🎉 Hecho: altas de pago con trial, cobros, cuotas, recargas, empresas e integraciones funcionan solos; el panel interno sirve para supervisarlos. Para vender al público, completa [GUIA_COMERCIALIZACION.md](../GUIA_COMERCIALIZACION.md).

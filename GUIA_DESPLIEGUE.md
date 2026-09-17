@@ -1,11 +1,13 @@
-# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.8.0
+# 🚀 GUIA_DESPLIEGUE.md — ReviewFlow AI v3.9.0
 
 Despliegue en **producción desde cero**, paso a paso, sin asumir conocimientos previos.
 Al final tendrás `https://tudominio.com` cobrando con Stripe en modo live.
 
 > ¿Solo quieres probar gratis antes? Empieza por **[GUIA_GRATIS.md](./GUIA_GRATIS.md)** (0 €)
 > y vuelve aquí cuando vayas a comercializar. Los pasos manuales a tu cargo están en
-> **[GUIA_PASOS_MANUALES.md](./GUIA_PASOS_MANUALES.md)**.
+> **[GUIA_PASOS_MANUALES.md](./GUIA_PASOS_MANUALES.md)**, y todo lo que debes aportar
+> para vender al público (empresa, marca, legal, soporte…) en
+> **[GUIA_COMERCIALIZACION.md](./GUIA_COMERCIALIZACION.md)**.
 
 ---
 
@@ -39,7 +41,7 @@ Al final tendrás `https://tudominio.com` cobrando con Stripe en modo live.
 ## 2. Supabase: base de datos + auth (20 min)
 
 1. Crea un proyecto en [supabase.com](https://supabase.com) (región **West EU / Frankfurt** si tus clientes son españoles).
-2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → **`migration_3_8_0.sql`**).
+2. **SQL Editor** → pega el contenido de `supabase/schema.sql` → **Run**. (Si ya tenías datos de una versión anterior, ejecuta en orden `migration_3_4_0.sql` → `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` → **`migration_3_9_0.sql`**) — la última deja el modelo 100 % de pago.
 3. **Authentication → Providers → Email**: activado (magic link desactivado, contraseña activada).
 4. **Authentication → URL Configuration** → Site URL = `https://tudominio.com` (+ añade la URL a Redirect URLs).
 5. **Project Settings → API**: copia `URL`, `anon public` y `service_role` → irán al `.env` del paso 6.
@@ -49,9 +51,11 @@ Al final tendrás `https://tudominio.com` cobrando con Stripe en modo live.
 ## 3. Stripe: productos, precios y webhook (25 min)
 
 1. Activa tu cuenta (empresa/autónomo + IBAN) y pasa a **Live mode**.
-2. **Product catalog** → crea dos productos mensuales:
-   - `Solo Reseñas` → 29 €/mes → copia su **Price ID** (`price_…`).
-   - `Completo E-commerce` → 79 €/mes → copia su **Price ID**.
+2. **Product catalog** → crea dos productos mensuales (**sin plan gratuito**):
+   - `Solo Reseñas` → 29 €/mes → copia su **Price ID** (`price_…`) → `STRIPE_PRICE_PRO`.
+   - `Completo E-commerce` → 79 €/mes → copia su **Price ID** → `STRIPE_PRICE_BUSINESS`.
+   - Activa **Smart Retries + email de impago** (Settings → Billing → Revenue recovery) y los
+     **emails de prueba que termina** para el trial de 7 días (lo aplica el código).
 3. **Developers → API keys** → copia la `Secret key` **live** (`sk_live_…`). La `Publishable key` no se usa (el checkout es server-side).
 4. **Developers → Webhooks** → **Add endpoint**:
    - URL: `https://tudominio.com/api/stripe/webhook`
@@ -82,7 +86,7 @@ Variables resultantes: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRI
 ## 6. Variables de entorno (10 min)
 
 1. Copia la plantilla: `cp .env.example .env` (o pega cada variable en el panel de tu hosting: Vercel → Settings → Environment Variables, etc.).
-2. Rellena **todas**: `NEXT_PUBLIC_APP_URL=https://tudominio.com`, `SUPERADMIN_EMAILS=tu@email.com`, las 3 de Supabase, las 4 de Stripe y las 5 de SMTP.
+2. Rellena **todas**: `NEXT_PUBLIC_APP_URL=https://tudominio.com`, `SUPERADMIN_EMAILS=tu@email.com`, las **6 legales/empresa** (`NEXT_PUBLIC_COMPANY_NAME`, `NEXT_PUBLIC_CIF`, `NEXT_PUBLIC_ADDRESS`, `NEXT_PUBLIC_LEGAL_EMAIL`, `NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_DOMAIN` — salen en el footer y en las páginas legales), las 3 de Supabase, las de Stripe (precios **live** + secretos **live**) y las 5 de SMTP.
 3. ⚠️ Nunca subas el `.env` a Git ni lo pegues en chats. Rota cualquier clave que se exponga.
 
 ---

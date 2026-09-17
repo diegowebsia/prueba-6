@@ -1,4 +1,4 @@
-# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.8.0)
+# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.9.0)
 
 Todo lo que necesitas para **operar tu SaaS día a día**: planes, cobros, cuotas,
 protección de la base de datos, soporte y mantenimiento. Cero código.
@@ -13,30 +13,32 @@ protección de la base de datos, soporte y mantenimiento. Cero código.
 
 ---
 
-## 1. Los 3 planes (qué estás vendiendo)
+## 1. Los 2 planes (qué estás vendiendo)
 
-| | **Gratuito — 0 €/mes** | **Pro — 29 €/mes** | **Business — 79 €/mes** |
-|---|---|---|---|
-| Para quién | Probar el producto sin tarjeta | Negocios con reseñas cada semana | Tiendas/cadenas con pedidos y varias sedes |
-| Peticiones de opiniones/mes | 50 | 500 | 2.000 |
-| Opiniones importadas/mes | 100 | 1.000 | 5.000 |
-| Respuestas con IA/mes | 30 | 300 | 1.500 |
-| Sincronizaciones automáticas/mes | 30 | 120 | 720 |
-| Sedes incluidas | 1 | 3 | 10 |
-| Email · Google Business/Places · IA | ✅ | ✅ | ✅ |
-| WhatsApp (peticiones y alertas) | ❌ | ✅ | ✅ |
-| Trustpilot · publicar en Google | ❌ | ✅ | ✅ |
-| Shopify / Woo / TPV + WhatsApp al entregar | ❌ | ❌ | ✅ |
-| Soporte | Comunidad | Email | Prioritario |
-| Opiniones guardadas (tope BD) | 500 | 5.000 | 25.000 |
-| Retención de historial | 30 días | 180 días | 365 días |
-| Almacenamiento asignado | 250 MB | 2 GB | 10 GB |
+| | **Pro — 29 €/mes** | **Business — 79 €/mes** |
+|---|---|---|
+| Para quién | Negocios con reseñas cada semana | Tiendas/cadenas con pedidos y varias sedes |
+| Peticiones de opiniones/mes | 500 | 2.000 |
+| Opiniones importadas/mes | 1.000 | 5.000 |
+| Respuestas con IA/mes | 300 | 1.500 |
+| Presupuesto de IA/mes | 250.000 tokens | 1.200.000 tokens |
+| Sincronizaciones automáticas/mes | 120 | 720 |
+| Sedes incluidas | 3 | 10 |
+| Email · Google Business/Places · IA | ✅ | ✅ |
+| WhatsApp (peticiones y alertas) | ✅ | ✅ |
+| Trustpilot · publicar en Google | ✅ | ✅ |
+| Shopify / Woo / TPV + WhatsApp al entregar | ❌ | ✅ |
+| Soporte | Email | Prioritario |
+| Opiniones guardadas (tope BD) | 5.000 | 25.000 |
+| Retención de historial | 180 días | 365 días |
+| Almacenamiento asignado | 2 GB | 10 GB |
 
 **«Petición» =** 1 email o WhatsApp de solicitud de opinión. Las otras tres cuotas
 (opiniones, IA, sincronizaciones) son independientes: agotar una **no** bloquea las demás.
 
-**Prueba:** solo los planes de pago (Pro/Business) dan **7 días gratis** con tarjeta.
-El plan Gratuito se activa al instante sin tarjeta (`/api/tenants/start`).
+**Prueba:** los 2 planes dan **7 días gratis** con tarjeta obligatoria. Sin suscripción
+activa (o con la prueba caducada) no hay acceso: el panel redirige a `/bienvenido` y las
+APIs responden **402**. No existe plan gratuito ni alta sin tarjeta.
 
 **Recargas puntuales** (pago único, válidas solo el ciclo en curso):
 
@@ -68,7 +70,7 @@ consumo de **tokens de IA** y el coste estimado del ciclo, y en el diagnóstico
 interno tienes `GET /api/admin/db` (latencia, conexiones, tamaño por tabla) y
 `GET /api/ai` (estado del motor de IA).
 
-Acciones por cliente (··· en su fila): **cambiar plan** (Gratuito/Pro/Business),
+Acciones por cliente (··· en su fila): **cambiar plan** (Pro/Business),
 **suspender/reactivar** (el suspendido pierde el acceso al instante), **ver email del dueño**.
 
 ---
@@ -83,17 +85,17 @@ SQL con `purge_tenant()` / `purge_all_tenants()` como segunda red de seguridad).
 
 ### 3.1 Topes por tabla y plan
 
-| Tabla | Qué guarda | Gratuito | Pro | Business |
-|---|---|---|---|---|
-| `reviews` | Opiniones importadas/creadas (texto + respuesta + estado) | **500 filas** | **5.000 filas** | **25.000 filas** |
-| `quota_events` | Historial/auditoría de consumo (1 fila por operación) | **2.000 filas · 30 días** | **10.000 filas · 180 días** | **50.000 filas · 365 días** |
-| `integrations` | Conexiones activas (Google, Trustpilot, WhatsApp, tienda) | **2** | **6** | **20** |
-| `ai_interactions` | Contabilidad de cada llamada de IA (tokens, coste, latencia) | **2.000 filas · 30 días** | **20.000 filas · 180 días** | **100.000 filas · 365 días** |
-| `system_logs` | Logs técnicos de la instancia (tabla compartida) | 365 días (purga global) | 365 días | 365 días |
-| Almacenamiento activo estimado | `reviews` + `quota_events` + `integrations` | **250 MB** | **2 GB (2.048 MB)** | **10 GB (10.240 MB)** |
+| Tabla | Qué guarda | Pro | Business |
+|---|---|---|---|
+| `reviews` | Opiniones importadas/creadas (texto + respuesta + estado) | **5.000 filas** | **25.000 filas** |
+| `quota_events` | Historial/auditoría de consumo (1 fila por operación) | **10.000 filas · 180 días** | **50.000 filas · 365 días** |
+| `integrations` | Conexiones activas (Google, Trustpilot, WhatsApp, tienda) | **6** | **20** |
+| `ai_interactions` | Contabilidad de cada llamada de IA (tokens, coste, latencia) | **20.000 filas · 180 días** | **100.000 filas · 365 días** |
+| `system_logs` | Logs técnicos de la instancia (tabla compartida) | 365 días (purga global) | 365 días |
+| Almacenamiento activo estimado | `reviews` + `quota_events` + `integrations` | **2 GB (2.048 MB)** | **10 GB (10.240 MB)** |
 
 > Las cifras de MB son la **cuota asignada**; el peso real de cada plan si se llena
-> es mucho menor (500 opiniones ≈ 3 MB, 25.000 ≈ 150 MB). Es margen de seguridad
+> es mucho menor (5.000 opiniones ≈ 30 MB, 25.000 ≈ 150 MB). Es margen de seguridad
 > para índices, bloat y picos, no una promesa de uso.
 
 **Estimación por fila** (`ROW_KB` en `lib/plans.ts`): opinión ≈ 6 KB (texto +
@@ -169,7 +171,6 @@ registrarse.
 
 | Plan | Créditos de IA/mes | Presupuesto de tokens/mes | Filas de histórico (`ai_interactions`) |
 |---|---|---|---|
-| Gratuito | 30 | 30.000 | 2.000 |
 | Pro | 300 | 250.000 | 20.000 |
 | Business | 1.500 | 1.200.000 | 100.000 |
 
@@ -224,11 +225,10 @@ rutas de IA devuelven 401/503 sin sesión. Si algo falla, no lo lances a producc
 | Escenario | Cómo provocarlo | Resultado esperado |
 |---|---|---|
 | Alta con prueba de 7 días | Checkout con `4242 4242 4242 4242` y plan Pro | Empresa creada, `trialing`, cuota Pro activa |
-| Alta del plan Gratuito | `/bienvenido` → *Gratuito* | Empresa creada sin tarjeta, `active`, cuota Gratuito |
 | Cambio de plan (upgrade) | Portal de Stripe → cambiar a Business | `customer.subscription.updated` → `plan = business` y cuotas nuevas al instante |
 | Compra de recarga | *Facturación y cuota* → +1.000 peticiones | `checkout.session.completed` → `extra_requests` +1000 y fila en `addons` |
 | Impago | En Stripe, añade una tarjeta `4000 0000 0000 0341` | `invoice.payment_failed` → `past_due` → el middleware corta el panel |
-| Cancelación | Portal → cancelar al final del periodo | `customer.subscription.deleted` → plan `free` al terminar, datos intactos |
+| Cancelación | Portal → cancelar | `customer.subscription.deleted` → `inactive` al instante, se conserva el último plan de pago, datos intactos 30 días |
 | Webhook repetido | Stripe → Webhooks → *Resend* un evento ya procesado | No duplica capacidad (idempotencia por `stripe_payment_id`) |
 | Webhook caído | Desactiva el endpoint y compra | El cobro ocurre igual; al reactivar y reenviar, la capacidad se aplica |
 
@@ -259,11 +259,10 @@ stripe trigger invoice.payment_failed
 ## 6. El ciclo de vida de un cliente
 
 ```
-Registro → elige plan en /bienvenido
-  · Gratuito → empresa creada al instante, sin tarjeta
-  · Pro/Business → Stripe Checkout con prueba de 7 días (tarjeta)
+Registro → elige plan en /bienvenido (Pro/Business, prueba de 7 días con tarjeta)
+  → Stripe Checkout → empresa auto-creada, estado `trialing`
   → 3 días antes de acabar la prueba: email automático «tu prueba termina»
-  → día 7: Stripe cobra → estado `active` ✅ (o cancela → `canceled`, acceso cortado ⛔)
+  → día 7: Stripe cobra → estado `active` ✅ (o cancela/falla → `inactive`/`past_due`, acceso cortado ⛔)
   → cada mes: la cuota se renueva sola (y las recargas caducan con el ciclo)
   → impago: `past_due` → acceso cortado hasta que pague (Stripe reintenta solo)
 ```
@@ -323,11 +322,11 @@ Cambios de plan/estado, desde `/admin` o deja que el webhook lo haga.
 
 ## 10. Números que importan (mínimo viable)
 
-- **MRR:** Gratuito 0 € · Pro 29 € · Business 79 €. Resta comisiones Stripe (~1,5 % + 0,25 €).
+- **MRR:** Pro 29 € · Business 79 € por cliente. Resta comisiones Stripe (~1,5 % + 0,25 €).
 - **ARPU con recargas:** las recargas de 6–15 € suben el ticket medio sin subir el churn.
 - **Churn:** cancelados ÷ clientes a inicio de mes. Sano < 5 %.
 - **Costes fijos típicos:** hosting 5–25 € + Supabase 0–25 $ + dominio ~1 €/mes + SMTP 0–9 €.
   Con **10 clientes Pro** (~290 €) cubres toda la infraestructura.
-- **Conversión Gratuito → Pro:** mide cuántos pasan del plan Gratuito en < 30 días; si baja, revisa el email de bienvenida y las recargas sugeridas.
+- **Conversión trial → pago:** mide cuántos trials llegan a `active` el día 8; si baja, revisa el email de bienvenida, el recordatorio del día 4 y la fricción del onboarding.
 
 ¡A vender! 🚀 Para cambios legales/fiscales del negocio, revisa [GUIA_PASOS_MANUALES.md](./GUIA_PASOS_MANUALES.md).

@@ -1,8 +1,8 @@
-# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.8.0)
+# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.9.0)
 
 Dos cosas en un solo documento:
 
-1. **La explicación comercial de los 3 planes** (para que la entiendas tú y se la
+1. **La explicación comercial de los 2 planes de pago** (para que la entiendas tú y se la
    cuentes a un cliente en 30 segundos).
 2. **Cómo montar y probar el proyecto completo sin pagar nada** (~30 minutos).
 
@@ -13,38 +13,38 @@ Dos cosas en un solo documento:
 
 ## 1. Los planes, en lenguaje de cliente 💬
 
-| | 🟢 **Gratuito** | 🔵 **Pro** | 🟣 **Business** |
-|---|---|---|---|
-| **Precio** | 0 €/mes | 29 €/mes | 79 €/mes |
-| **Ideal para** | Probar y ordenar las primeras opiniones | Un negocio que recibe opiniones cada semana | Tiendas y cadenas con pedidos y varias sedes |
-| **Pide opiniones** | 50 al mes por email | 500 al mes por email **y WhatsApp** | 2.000 al mes por email y WhatsApp |
-| **Guarda e importa** | 100 opiniones al mes (máx. 500 en total) | 1.000 al mes (máx. 5.000 en total) | 5.000 al mes (máx. 25.000 en total) |
-| **Respuestas con IA** | 30 al mes | 300 al mes | 1.500 al mes |
-| **Presupuesto de IA incluido** | 30.000 tokens/mes | 250.000 tokens/mes | 1.200.000 tokens/mes |
-| **Sincronizaciones automáticas** | 30 al mes | 120 al mes | 720 al mes |
-| **Sedes** | 1 | 3 | 10 |
-| **Emails de solicitud** | ✅ | ✅ | ✅ |
-| **Google (reseñas + publicar respuestas)** | ✅ | ✅ | ✅ |
-| **Alertas y peticiones por WhatsApp** | ❌ | ✅ | ✅ |
-| **Trustpilot** | ❌ | ✅ | ✅ |
-| **Tienda (Shopify / Woo / TPV) + WhatsApp al entregar** | ❌ | ❌ | ✅ |
-| **Soporte** | Comunidad | Email | Prioritario |
-| **Prueba** | Siempre gratis, sin tarjeta | 7 días gratis | 7 días gratis |
+| | 🔵 **Pro** | 🟣 **Business** |
+|---|---|---|
+| **Precio** | 29 €/mes | 79 €/mes |
+| **Ideal para** | Un negocio que recibe opiniones cada semana | Tiendas y cadenas con pedidos y varias sedes |
+| **Pide opiniones** | 500 al mes por email **y WhatsApp** | 2.000 al mes por email y WhatsApp |
+| **Guarda e importa** | 1.000 al mes (máx. 5.000 en total) | 5.000 al mes (máx. 25.000 en total) |
+| **Respuestas con IA** | 300 al mes | 1.500 al mes |
+| **Presupuesto de IA incluido** | 250.000 tokens/mes | 1.200.000 tokens/mes |
+| **Sincronizaciones automáticas** | 120 al mes | 720 al mes |
+| **Sedes** | 3 | 10 |
+| **Emails de solicitud** | ✅ | ✅ |
+| **Google (reseñas + publicar respuestas)** | ✅ | ✅ |
+| **Alertas y peticiones por WhatsApp** | ✅ | ✅ |
+| **Trustpilot** | ✅ | ✅ |
+| **Tienda (Shopify / Woo / TPV) + WhatsApp al entregar** | ❌ | ✅ |
+| **Soporte** | Email | Prioritario |
+| **Prueba** | 7 días gratis con tarjeta | 7 días gratis con tarjeta |
 
 **Cómo contarlo en una frase:**
-> «Gratis para empezar — sin tarjeta. Cuando pidas más de 50 opiniones al mes o
-> quieras avisos por WhatsApp, el plan Pro son 29 €. Si además tienes tienda online
-> y quieres que pida opiniones sola cuando llega el pedido, Business son 79 €.»
+> «Prueba 7 días gratis, sin pagar nada. El plan Pro son 29 € al mes para negocios
+> que reciben opiniones cada semana, con avisos por WhatsApp. Si además tienes tienda
+> online y quieres que pida opiniones sola cuando llega el pedido, Business son 79 €.»
 
 **Preguntas que te harán (y respuestas cortas):**
 
-- *«¿Qué es una petición?»* → Cada email o WhatsApp que pides a un cliente. En Gratuito, 50; en Pro, 500; en Business, 2.000.
+- *«¿Qué es una petición?»* → Cada email o WhatsApp que pides a un cliente. En Pro, 500 al mes; en Business, 2.000.
 - *«¿Qué pasa si me quedo sin cuota antes de fin de mes?»* → Nada se rompe: sigues viendo tus opiniones, pero no se envían nuevas. Puedes esperar al día 1 o comprar una recarga puntual (+1.000 peticiones 9 €).
-- *«¿Pierdo mis opiniones si no pago?»* → No. Tu historial se conserva; si bajas al plan Gratuito, se mantienen las últimas 500 y el resto se archiva automáticamente.
+- *«¿Pierdo mis opiniones si no pago?»* → No. Tu historial se conserva 30 días; al reactivar tu plan recuperas el acceso tal cual.
 - *«¿Puedo cambiar de plan?»* → Sí, desde el botón *Suscripción* (portal de Stripe), cuando quieras y sin llamadas.
-- *«¿Guarda todos mis datos?»* → Cada plan tiene un tope de almacenamiento (250 MB / 2 GB / 10 GB) y las opiniones más antiguas se archivan al llenarse. Así el precio nunca sube «por sorpresa» por exceso de datos.
+- *«¿Guarda todos mis datos?»* → Cada plan tiene un tope de almacenamiento (2 GB / 10 GB) y las opiniones más antiguas se archivan al llenarse. Así el precio nunca sube «por sorpresa» por exceso de datos.
 - *«¿Cómo funciona la IA?»* → Escribe un borrador de respuesta en el tono de tu negocio (y avisa en privado cuando la reseña es de 1–3★). Usa `gpt-4o-mini`, el modelo más económico de OpenAI: cada respuesta cuesta céntimas de céntimo y va incluida en tu plan.
-- *«¿Y si la IA se pasa de lista con el gasto?»* → No puede: tu plan incluye un presupuesto de tokens (30.000 / 250.000 / 1.200.000). Al agotarlo, la IA se pausa hasta el día 1 y sigues respondiendo con plantillas; nunca hay cargos sorpresa.
+- *«¿Y si la IA se pasa de lista con el gasto?»* → No puede: tu plan incluye un presupuesto de tokens (250.000 / 1.200.000). Al agotarlo, la IA se pausa hasta el día 1 y sigues respondiendo con plantillas; nunca hay cargos sorpresa.
 - *«¿Qué pasa si OpenAI se cae?»* → La plataforma reintenta sola y, si no responde, usa una plantilla profesional local. Nunca te quedas sin poder responder.
 
 ---
@@ -72,16 +72,14 @@ Dos cosas en un solo documento:
 3. **SQL Editor → New query** → pega **todo** `supabase/schema.sql` → **Run** (`Success`).
    - ¿Ya tenías la BD de una versión anterior? Ejecuta en orden las migraciones
      `migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
-     `migration_3_5_0.sql` → `migration_3_6_0.sql` → **`migration_3_7_0.sql`**
-     (todas idempotentes; la última añade los 3 planes, las columnas
-     `extra_requests/extra_syncs/extra_stored` y las funciones de purga
-     `purge_tenant()` / `purge_all_tenants()`).
+     `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` →
+     `migration_3_8_0.sql` → **`migration_3_9_0.sql`**
+     (todas idempotentes; la última deja el modelo 100 % de pago: planes
+     `pro|business`, estados `inactive`/`paused` y columnas de recargas).
 
 4. **Opcional pero útil**: *Project Settings → Database → Connection pooling* → copia la cadena
    del puerto **6543** → `DATABASE_URL`. Con ella el panel interno muestra latencia, conexiones y
    tamaño real por tabla (`/api/health?db=1`). Sin ella, todo sigue funcionando.
-5. ¿BD creada con una versión anterior? Ejecuta `migration_3_8_0.sql` para añadir la
-   contabilidad de tokens de IA, los índices de rendimiento y las políticas RLS.
 
 ## Paso 3 — IA en modo gratis (2 min, opcional)
 
@@ -99,7 +97,7 @@ Dos cosas en un solo documento:
    - `ReviewFlow Pro` 29 €/mes → copia su **Price ID**.
    - `ReviewFlow Business` 79 €/mes → copia su **Price ID**.
 
-   (El plan Gratuito no se crea en Stripe: se activa sin tarjeta.)
+   (No hay plan gratuito: los 2 planes se prueban 7 días con tarjeta de test.)
 4. Opcional: crea también las 4 recargas de pago único (9 / 12 / 15 / 6 €) si quieres usar Price IDs en lugar de los importes de `lib/plans.ts`.
 5. El webhook lo crearás en el paso 7 (necesitas antes la URL de Vercel).
 
@@ -138,15 +136,14 @@ Dos cosas en un solo documento:
 
 ## Paso 8 — Prueba el flujo completo E2E (5 min)
 
-1. `npm run verify` (o `/api/health?verbose=1`) → `"ok":true`, `version:"3.8.0"` e integraciones en `true`.
-2. **Regístrate** → en `/bienvenido` verás los 3 planes:
-   - **Gratuito** → entra directo al panel, sin tarjeta.
+1. `npm run verify` (o `/api/health?verbose=1`) → `"ok":true`, `version:"3.9.0"` e integraciones en `true`.
+2. **Regístrate** → en `/bienvenido` verás los 2 planes de pago:
    - **Pro/Business** → checkout de prueba con `4242 4242 4242 4242` (7 días sin cargo).
 3. En el panel: ajusta el tono de la IA, genera un borrador y publícalo. La respuesta trae los
    **tokens y el coste reales** de esa llamada; verás la barra *Presupuesto de IA* actualizarse.
 4. Comprueba la cuota y las recargas en *Facturación y cuota*.
-5. Simula un impago (Stripe test: tarjeta `4000 0000 0000 0341`) → el panel se corta solo, y una
-   cancelación → vuelves al plan Gratuito conservando tus datos.
+5. Simula un impago (Stripe test: tarjeta `4000 0000 0000 0341`) → `past_due`: el panel se corta
+   solo y las APIs responden 402; y una cancelación → `inactive` conservando tus datos 30 días.
 6. Entra en `/admin` con tu email: verás tu empresa, la suscripción, los **tokens de IA del ciclo**
    y el webhook en **Logs**.
 6. Visita `/sobre-nosotros` y `/contacto` (prueba el formulario: llega a tu SMTP).
@@ -162,16 +159,16 @@ Dos cosas en un solo documento:
 | "La IA responde genérico" | Sin `OPENAI_API_KEY` o sin crédito: la app usa el fallback local (mira `ai_interactions.ok`) |
 | "Se agotó mi IA antes de fin de mes" | Es el presupuesto de tokens del plan; compra la recarga `+500 respuestas IA` (15 €) o sube de plan |
 | Google/WhatsApp dan error | Normal en gratis: esas claves son opcionales (GUIA_PASOS_MANUALES §6) |
-| «Se han archivado opiniones» | Es el tope del plan Gratuito (500 guardadas): pasa a Pro o compra +2.000 opiniones |
+| «Se han archivado opiniones» | Es el tope de guardadas de tu plan (5.000 en Pro): compra +2.000 opiniones o sube a Business |
 
 ## Resumen de lo que has montado gratis
 
 | Pieza | Estado en modo gratis |
 |---|---|
-| 3 planes + cuotas + recargas | ✅ idéntico a producción (Stripe test) |
+| 2 planes de pago + cuotas + recargas | ✅ idéntico a producción (Stripe test) |
 | IA medida por tokens | ✅ presupuesto real por plan (con clave de OpenAI o con plantilla local) |
 | Webhook de Stripe | ✅ mismo endpoint firmado que en live (`npm run verify` lo comprueba) |
-| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.8.0 |
+| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.9.0 |
 | Protección de datos | ✅ topes por tabla, purga automática y fallbacks |
 | Coste total | **0 €** hasta que decidas vender |
 

@@ -1,10 +1,12 @@
-# 🌍 GUIA_GENERAL — Publica ReviewFlow AI en cualquier hosting (v3.8.0)
+# 🌍 GUIA_GENERAL — Publica ReviewFlow AI en cualquier hosting (v3.9.0)
 
 Guía resumida para producción comercial en el host que elijas: el mismo código
-funciona en todos sin cambios. Flujo: registro → **plan Gratuito al instante** o
-**prueba de 7 días** en Pro/Business → panel. Tiempo estimado: **~40 minutos**.
+funciona en todos sin cambios. Flujo: registro → **prueba de 7 días** en Pro/Business
+(con tarjeta) → panel. **Sin plan gratuito.** Tiempo estimado: **~40 minutos**.
 
 > 🆓 ¿Aún no quieres pagar? Prueba primero gratis con [GUIA_GRATIS.md](../GUIA_GRATIS.md).
+> 💰 ¿Vas a vender al público? Lee también [GUIA_COMERCIALIZACION.md](../GUIA_COMERCIALIZACION.md)
+> (empresa, marca, legal, soporte y checklist go-live).
 
 ## Paso 1 — Cuentas necesarias (10 min)
 
@@ -25,9 +27,9 @@ funciona en todos sin cambios. Flujo: registro → **plan Gratuito al instante**
 1. [supabase.com](https://supabase.com) → **New project**.
 2. **Project Settings → API** → copia `Project URL`, `anon public`, `service_role`.
 3. **SQL Editor** → pega todo `supabase/schema.sql` → **Run** (`Success`).
-   - ¿BD de versión anterior? Ejecuta en orden `migration_3_2_0.sql` → … → `migration_3_6_0.sql` →
-     **`migration_3_7_0.sql`** (3 planes, recargas y funciones de purga) →
-     **`migration_3_8_0.sql`** (contabilidad de tokens de IA, índices de rendimiento y RLS).
+   - ¿BD de versión anterior? Ejecuta en orden `migration_3_2_0.sql` → … → `migration_3_7_0.sql` →
+     `migration_3_8_0.sql` (contabilidad de tokens de IA, índices y RLS) →
+     **`migration_3_9_0.sql`** (modelo 100 % de pago: planes `pro|business`, `inactive`/`paused`).
 4. **Settings → Database → Connection string → Connection pooling** → copia la cadena del
    **puerto 6543** (Supavisor, modo *transaction*) y pégala como `DATABASE_URL`.
    Es la conexión que aguanta los picos de tráfico comercial: la app solo la usa para
@@ -54,7 +56,7 @@ funciona en todos sin cambios. Flujo: registro → **plan Gratuito al instante**
 3. `OPENAI_MODEL=gpt-4o-mini` (por defecto). Ajustes finos opcionales en `.env.example`:
    `OPENAI_TIMEOUT_MS`, `OPENAI_MAX_ATTEMPTS`, `OPENAI_RPM_PER_TENANT`, `OPENAI_MAX_CONCURRENCY`.
 4. **El coste ya está acotado por diseño**: cada plan tiene un presupuesto de tokens
-   (Gratuito 30.000 · Pro 250.000 · Business 1.200.000 al mes). Al agotarlo, la API responde
+   (Pro 250.000 · Business 1.200.000 al mes). Al agotarlo, la API responde
    `429 token_budget_exhausted` hasta el día 1 o hasta que el cliente compre la recarga de IA.
    A 0,15 $/1M de entrada y 0,60 $/1M de salida, un borrador cuesta ~0,0001 $: incluso el plan
    Business usado a tope cuesta céntimos.
@@ -76,7 +78,7 @@ Variables necesarias: las de `.env.example` + `SUPERADMIN_EMAILS=tu@email.com`.
 
 ```bash
 curl -fsSL https://get.docker.com | sh
-git clone https://github.com/diegowebsia/prueba-4.git reviewflow-ai && cd reviewflow-ai
+git clone https://github.com/diegowebsia/prueba-6.git reviewflow-ai && cd reviewflow-ai
 cp .env.example .env && nano .env      # pega TODAS las claves reales
 docker compose up -d --build
 curl http://localhost:3000/api/health  # → {"ok":true,...}
@@ -124,9 +126,9 @@ npm install && npm run build && npm run start   # $PORT, ideal con pm2
    # Verifica: health · IA (modelo y límites) · pool de PostgreSQL ·
    # precios de Stripe · firma del webhook (válida 2xx / falsa 400) · rutas de IA sin sesión → 401
    ```
-1. `/api/health?verbose=1` → `"ok":true`, `version:"3.8.0"` (Google/WhatsApp pueden estar
+1. `/api/health?verbose=1` → `"ok":true`, `version:"3.9.0"` (Google/WhatsApp pueden estar
    en `false`: opcionales) y `integrations.database` en `true` si pusiste `DATABASE_URL`.
-2. Regístrate → `/bienvenido`: activa el **plan Gratuito** (sin tarjeta) o haz la
+2. Regístrate → `/bienvenido`: verás solo los 2 planes de pago. Haz la
    **prueba de 7 días** de Pro/Business → entras al `/dashboard`.
 3. Conecta Google (1 clic) → **Sincronizar** → genera un borrador IA → publícalo.
 4. Comprueba la cuota en *Facturación y cuota* y el catálogo de recargas.
@@ -134,7 +136,7 @@ npm install && npm run build && npm run start   # $PORT, ideal con pm2
    *Facturación y cuota* → **Presupuesto de IA** refleja el consumo del ciclo.
 6. Ciclo comercial completo (prueba en Stripe test antes de LIVE): alta con trial, cambio de plan
    en el portal, compra de una recarga, impago con `4000 0000 0000 0341` (→ `past_due` y corte del
-   panel) y cancelación (→ vuelta al plan Gratuito conservando datos).
+   panel) y cancelación (→ `inactive`, conservando datos 30 días).
 7. Panel interno: empresa visible, suscripción `trialing`, **tokens de IA del ciclo**, evento en
    **Logs**, y `GET /api/admin/db` con latencia, conexiones y tamaño real por tabla.
 6. Completa [GUIA_PASOS_MANUALES.md](./GUIA_PASOS_MANUALES.md) (fiscal, logo, DNS, integraciones). 🎉
