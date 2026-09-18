@@ -1,4 +1,4 @@
-# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.9.0)
+# 🆓 GUIA_GRATIS — ReviewFlow AI a 0 € (v3.10.0)
 
 Dos cosas en un solo documento:
 
@@ -7,7 +7,7 @@ Dos cosas en un solo documento:
 2. **Cómo montar y probar el proyecto completo sin pagar nada** (~30 minutos).
 
 > ⚠️ El plan Hobby de Vercel **prohíbe el uso comercial** (usa Stripe en modo test,
-> sin dinero real). Cuando vayas a vender, pasa a [GUIA_GENERAL.md](./GUIA_GENERAL.md).
+> sin dinero real). Cuando vayas a vender, pasa a [GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md).
 
 ---
 
@@ -27,6 +27,8 @@ Dos cosas en un solo documento:
 | **Google (reseñas + publicar respuestas)** | ✅ | ✅ |
 | **Alertas y peticiones por WhatsApp** | ✅ | ✅ |
 | **Trustpilot** | ✅ | ✅ |
+| **TripAdvisor** | ✅ | ✅ |
+| **Embudo privado `/valorar` (4-5★ a plataformas, 1-3★ a ticket)** | ✅ | ✅ |
 | **Tienda (Shopify / Woo / TPV) + WhatsApp al entregar** | ❌ | ✅ |
 | **Soporte** | Email | Prioritario |
 | **Prueba** | 7 días gratis con tarjeta | 7 días gratis con tarjeta |
@@ -73,9 +75,9 @@ Dos cosas en un solo documento:
    - ¿Ya tenías la BD de una versión anterior? Ejecuta en orden las migraciones
      `migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` →
-     `migration_3_8_0.sql` → **`migration_3_9_0.sql`**
-     (todas idempotentes; la última deja el modelo 100 % de pago: planes
-     `pro|business`, estados `inactive`/`paused` y columnas de recargas).
+     `migration_3_8_0.sql` → `migration_3_9_0.sql` → **`migration_3_10_0.sql`**
+     (todas idempotentes; la última añade TripAdvisor, opt-ins de WhatsApp,
+     Embudo Privado y `job_id` de IA asíncrona).
 
 4. **Opcional pero útil**: *Project Settings → Database → Connection pooling* → copia la cadena
    del puerto **6543** → `DATABASE_URL`. Con ella el panel interno muestra latencia, conexiones y
@@ -136,7 +138,7 @@ Dos cosas en un solo documento:
 
 ## Paso 8 — Prueba el flujo completo E2E (5 min)
 
-1. `npm run verify` (o `/api/health?verbose=1`) → `"ok":true`, `version:"3.9.0"` e integraciones en `true`.
+1. `npm run verify` (o `/api/health?verbose=1`) → `"ok":true`, `version:"3.10.0"` e integraciones en `true`.
 2. **Regístrate** → en `/bienvenido` verás los 2 planes de pago:
    - **Pro/Business** → checkout de prueba con `4242 4242 4242 4242` (7 días sin cargo).
 3. En el panel: ajusta el tono de la IA, genera un borrador y publícalo. La respuesta trae los
@@ -146,7 +148,9 @@ Dos cosas en un solo documento:
    solo y las APIs responden 402; y una cancelación → `inactive` conservando tus datos 30 días.
 6. Entra en `/admin` con tu email: verás tu empresa, la suscripción, los **tokens de IA del ciclo**
    y el webhook en **Logs**.
-6. Visita `/sobre-nosotros` y `/contacto` (prueba el formulario: llega a tu SMTP).
+7. Prueba el embudo: visita `/valorar/TU-SLUG` → vota 5★ (verás los botones públicos) y
+   después 2★ con mensaje (llega como ticket privado + aviso; nada se publica).
+8. Visita `/sobre-nosotros` y `/contacto` (prueba el formulario: llega a tu SMTP).
 
 ## Problemas típicos
 
@@ -168,12 +172,13 @@ Dos cosas en un solo documento:
 | 2 planes de pago + cuotas + recargas | ✅ idéntico a producción (Stripe test) |
 | IA medida por tokens | ✅ presupuesto real por plan (con clave de OpenAI o con plantilla local) |
 | Webhook de Stripe | ✅ mismo endpoint firmado que en live (`npm run verify` lo comprueba) |
-| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.9.0 |
+| PostgreSQL + RLS + índices | ✅ Supabase Free (500 MB) con migración 3.10.0 |
 | Protección de datos | ✅ topes por tabla, purga automática y fallbacks |
 | Coste total | **0 €** hasta que decidas vender |
 
 ## Siguiente paso: vender de verdad 💰
 
-Contrata un host de pago y sigue **[GUIA_GENERAL.md](./GUIA_GENERAL.md)** (mismo código,
+Contrata un host de pago y sigue **[GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md)** (mismo código,
 claves **live** de Stripe, dominio propio). Después completa
-**[GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md)** (fiscal, logo, DNS, integraciones).
+**[GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md)** (fiscal, logo, DNS, integraciones)
+y **[GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md)** (cron, cola, plantillas, embudo).

@@ -1,4 +1,4 @@
-# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.9.0)
+# 💰 GUIA_COMERCIALIZACION — Todo lo que TIENES QUE PONER TÚ para vender al público (v3.10.0)
 
 El código está 100 % programado: planes de pago con prueba de 7 días, cobros, cuotas,
 panel, integraciones y textos legales base. **Esta guía lista, bloque por bloque, todo lo
@@ -31,9 +31,9 @@ contratos. Nada de programar: rellenar, pegar, clicar y firmar.
 
 Guías relacionadas: credenciales paso a paso en
 [docs/GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md), despliegue técnico en
-[GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md) / [docs/GUIA_GENERAL.md](./docs/GUIA_GENERAL.md),
-operación diaria en [GUIA_ADMIN.md](./GUIA_ADMIN.md) y prueba a 0 € en
-[GUIA_GRATIS.md](./GUIA_GRATIS.md).
+[GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md), automatización en
+[GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md), operación diaria en
+[GUIA_ADMIN.md](./GUIA_ADMIN.md) y prueba a 0 € en [GUIA_GRATIS.md](./GUIA_GRATIS.md).
 
 ---
 
@@ -209,6 +209,8 @@ recargas y alertas. Sin SMTP, los mensajes solo quedan en logs internos (no los 
   Solo publica opiniones de clientes reales **con permiso escrito** (nombre/logo).
 - [ ] **Sobre nosotros** (`/sobre-nosotros`) y **contacto** (`/contacto`): adapta el texto a tu
   historia real y comprueba que el formulario llega a tu buzón.
+- [ ] **Materiales del embudo**: genera el QR de tu `/valorar/TU-SLUG` (mostrador, tickets,
+  packaging) y pega tus URLs públicas de TripAdvisor/Trustpilot en la pestaña *Embudo*.
 
 ---
 
@@ -260,9 +262,14 @@ En pruebas solo puedes escribir a números verificados y el token dura 24 h. Par
 - [ ] **Token permanente**: Business Settings → Users → **System Users** → usuario Admin →
   Add assets (tu app) → Generate token (`whatsapp_business_messaging` +
   `whatsapp_business_management`) → `WHATSAPP_TOKEN`. Este no caduca.
-- [ ] **Plantillas**: crea y envía a aprobación las plantillas de «petición de valoración»
-  (categoría *Marketing/Utility* según Meta). Sin plantillas aprobadas no puedes escribir
-  proactivamente a clientes en producción.
+- [ ] **Plantillas HSM**: crea y envía a aprobación `solicitud_valoracion`
+  ({{1}} nombre · {{2}} pedido · {{3}} negocio · {{4}} URL) y `alerta_resena` (aviso interno),
+  categoría *Utility*, idioma `es`. Sin plantillas aprobadas no puedes escribir proactivamente
+  a clientes en producción (fuera de la ventana de 24 h Meta rechaza el texto libre).
+- [ ] **Webhook entrante + opt-in RGPD**: configura el Callback URL
+  (`/api/integrations/whatsapp/webhook`, campo `messages`) para abrir ventanas de 24 h y
+  procesar bajas STOP, y añade el checkbox «Acepto recibir por WhatsApp…» al checkout de tu
+  tienda (guarda `whatsapp_optin`). Sin consentimiento registrado no sale el post-venta.
 - [ ] Conecta tu número real (o un número dedicado) y haz un envío de prueba desde el panel
   (*Empresa* → móvil con prefijo internacional sin `+`, p. ej. `34612345678`).
 - [ ] Avisa en tu checkout a los clientes finales de que recibirán la solicitud de valoración y
@@ -324,7 +331,8 @@ estructuradas, no asesoramiento jurídico**. Antes de vender:
   [GUIA_ADMIN §7](./GUIA_ADMIN.md).
 - [ ] **Monitorización**: activa alertas de tu hosting (caídas) + revisa `GET /api/health?db=1`
   (latencia BD) y Stripe → Webhooks (entregas en verde). Opcional: UptimeRobot/BetterStack
-  gratuitos contra `/api/health`.
+  gratuitos contra `/api/health`. Si usas cron+cola, vigila `/admin → Logs` (`cron.sync`,
+  `queue.*`) y el dashboard de Upstash.
 - [ ] **Precios de coste vigilados**: OpenAI (budget), Google Places (alerta), WhatsApp
   (conversaciones por país), Supabase (uso). Los topes por plan ya acotan el riesgo.
 
@@ -338,7 +346,7 @@ Hazlo en este orden. **No abras el registro público con ninguna casilla en rojo
 - [ ] `npm run typecheck` → 0 errores · `npm run build` → ✓ Compiled successfully.
 - [ ] `npm run verify -- --url https://tudominio.com` → todo verde (health, IA, pool PG,
   precios Stripe, firma del webhook válida→2xx / falsa→400, rutas de IA sin sesión→401).
-- [ ] `GET /api/health?verbose=1` → `version: "3.9.0"` y en verde todo lo que configuraste.
+- [ ] `GET /api/health?verbose=1` → `version: "3.10.0"` y en verde todo lo que configuraste.
 - [ ] `GET /api/stripe/webhook` (super-admin) → modo `live`, eventos y precios detectados.
 - [ ] `/admin` sin banner de demo; pestaña *Sistema* con planes, recargas e integraciones en «listo».
 
@@ -406,8 +414,11 @@ Cada cosa que tienes que aportar, con su destino exacto. Úsala como índice.
 | OAuth Google (client + secret) | Google Cloud Console | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | Consent screen en Production | Google Cloud Console | Panel de Google (verificación si la exigen) |
 | `GOOGLE_PLACES_API_KEY` (opc.) | Google Cloud Console | Variable homónima (+ restricción IP/API) |
-| WhatsApp IDs + token permanente | Meta for Developers + Business Settings | `WHATSAPP_*` (4 variables) |
-| Plantillas WhatsApp aprobadas | Meta → WhatsApp Manager | Panel de Meta |
+| WhatsApp IDs + token permanente | Meta for Developers + Business Settings | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID` |
+| Plantillas WhatsApp aprobadas | Meta → WhatsApp Manager | Panel de Meta + `WHATSAPP_TEMPLATE_*` |
+| Webhook entrante + opt-in checkout | Meta → Configuration + tu tienda | `WHATSAPP_VERIFY_TOKEN` + `whatsapp_optin` en el pedido |
+| TripAdvisor (SerpAPI/Outscraper) | serpapi.com / outscraper.com | `TRIPADVISOR_PROVIDER` + API key (+ Location ID por empresa) |
+| Cron + cola | Tú (secreto) + console.upstash.com | `CRON_SECRET` + `QSTASH_*` (opcionales; sin ellos, manual/en línea) |
 | Verificación empresa Meta | Meta Business Settings | Panel de Meta (documentación fiscal) |
 | Revisión legal + RAT + DPAs | Tu abogado/asesoría | Archiva contratos; ajusta `/terminos` si cambia algo |
 | 2FA en todas las cuentas | Cada proveedor | Cada proveedor |
@@ -428,7 +439,9 @@ Cada cosa que tienes que aportar, con su destino exacto. Úsala como índice.
 | OpenAI | céntimos–pocos €/mes | ~0,0001 $/borrador + budget que tú topas |
 | Google Places | ~0 € | Solo al sincronizar; con alerta de presupuesto |
 | WhatsApp | por conversación/país | Consulta precios Meta por tu país |
-| **Total orientativo** | **~15–60 €/mes** | Con 2–3 clientes Pro ya cubierto |
+| SerpAPI (TripAdvisor, opc.) | ~50–150 $/mes | Según volumen; alternativa Outscraper por tarea |
+| QStash (cola, opc.) | 0–10 $/mes | Plan gratis generoso; sin ella, todo en línea |
+| **Total orientativo** | **~15–60 €/mes** (hasta ~200 € con TripAdvisor) | Con 2–3 clientes Pro ya cubierto |
 
 ¡A vender! 🚀 Si algo falla en producción, el orden de diagnóstico es:
 `/admin → Logs` → `GET /api/health?verbose=1` → Stripe → Webhooks → esta guía (Bloque 13).

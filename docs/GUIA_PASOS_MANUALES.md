@@ -1,4 +1,4 @@
-# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.9.0)
+# 🧑‍💻 GUIA_PASOS_MANUALES — Solo lo que tienes que hacer tú (v3.10.0)
 
 Todo el código está programado, probado y con `npm run build` en verde. Esta guía lista
 **únicamente** lo que requiere tus cuentas, tus claves o tus decisiones: rellenar, pegar y clicar.
@@ -17,9 +17,11 @@ Nada de programar.
 | [9. Datos fiscales, logo y textos](#9-datos-fiscales-logo-y-textos) | 20 min | ✅ Sí |
 | [10. Verificación final y prueba E2E](#10-verificación-final-prueba-e2e) | 15 min | ✅ Sí |
 | [11. Troubleshooting de cuotas y cobros](#11-troubleshooting-cuotas-402429-y-cobros) | — | Consulta |
+| [12. Automatización v3.10.0 (cron, cola, TripAdvisor, embudo)](#12-automatización-v3100-cron-cola-tripadvisor-y-embudo) | 30 min | ⭕ Recomendado |
 
 > Despliegue (hosting, dominio, Docker, Vercel): [GUIA_GRATIS.md](../GUIA_GRATIS.md) para probar a 0 €
-> y [GUIA_GENERAL.md](./GUIA_GENERAL.md) / [GUIA_DESPLIEGUE.md](../GUIA_DESPLIEGUE.md) para producción.
+> y [GUIA_DESPLIEGUE.md](../GUIA_DESPLIEGUE.md) para producción.
+> Automatización (cron, cola QStash, plantillas HSM, opt-in, embudo): [GUIA_AUTOMATIZACION.md](../GUIA_AUTOMATIZACION.md).
 > Operación diaria del dueño: [GUIA_ADMIN.md](../GUIA_ADMIN.md).
 > Puesta en venta al público (todo lo que debes aportar tú): [GUIA_COMERCIALIZACION.md](../GUIA_COMERCIALIZACION.md).
 
@@ -72,7 +74,14 @@ cp .env.example .env
 | 24 | `WHATSAPP_PHONE_NUMBER_ID` | **Phone Number ID** del número emisor (no es el teléfono) | Idem, apartado «API Setup» | ⭕ |
 | 25 | `WHATSAPP_BUSINESS_ACCOUNT_ID` | **WhatsApp Business Account ID** | Meta → Business Settings → Accounts → WhatsApp Accounts | ⭕ |
 | 26 | `WHATSAPP_API_VERSION` | Versión de la Graph API | — (por defecto `v21.0`) | ⭕ |
-| 27 | `WHATSAPP_VERIFY_TOKEN` | Cadena aleatoria que **tú inventas** (reservada para un webhook entrante futuro) | — | ⭕ |
+| 27 | `WHATSAPP_VERIFY_TOKEN` | Cadena aleatoria que **tú inventas** para verificar el webhook entrante de Meta (ventana 24 h + bajas STOP) | La inventas tú; la pegas en Meta → WhatsApp → Configuration → Webhook | ⭕ |
+| 27b | `WHATSAPP_TEMPLATE_REVIEW_REQUEST` · `WHATSAPP_TEMPLATE_ALERT` · `WHATSAPP_TEMPLATE_LANG` | Nombres EXACTOS de tus plantillas HSM aprobadas + idioma (`es`) | Meta → tu app → WhatsApp → Message Templates (categoría UTILITY) | ⭕ |
+| 27c | `WHATSAPP_REQUIRE_OPTIN` | `true` = sin consentimiento registrado no sale WhatsApp al cliente (RGPD) | — (por defecto `true`; `false` solo en migración) | ⭕ |
+| 27d | `TRIPADVISOR_PROVIDER` | `serpapi` (defecto) u `outscraper` | Lo eliges tú | ⭕ |
+| 27e | `SERPAPI_API_KEY` | Clave de SerpAPI (engine `tripadvisor_review`) | [serpapi.com](https://serpapi.com) → API Key | ⭕ |
+| 27f | `OUTSCRAPER_API_KEY` | Clave de Outscraper (task `tripadvisor-reviews`), si lo eliges | [outscraper.com](https://outscraper.com) → API Key | ⭕ |
+| 27g | `CRON_SECRET` | Secreto que protege `/api/cron/sync-reviews` (Vercel Cron lo envía solo) | Lo generas tú: `openssl rand -hex 32` | ⭕ |
+| 27h | `QSTASH_TOKEN` · `QSTASH_CURRENT_SIGNING_KEY` · `QSTASH_NEXT_SIGNING_KEY` | Cola en segundo plano (entregas, IAs, WhatsApps, syncs). Sin esto, todo funciona en línea | [console.upstash.com](https://console.upstash.com) → QStash | ⭕ |
 | 28 | `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` | Dominio de Plausible (analítica sin cookies) | [plausible.io](https://plausible.io) | ⭕ |
 
 > 🔐 Reglas de oro: las claves con `NEXT_PUBLIC_` viajan al navegador (solo URL, `anon` y
@@ -141,6 +150,23 @@ WHATSAPP_PHONE_NUMBER_ID=123456789012345
 WHATSAPP_BUSINESS_ACCOUNT_ID=987654321098765
 WHATSAPP_API_VERSION=v21.0
 WHATSAPP_VERIFY_TOKEN=una-cadena-aleatoria-larga
+# Plantillas HSM aprobadas (obligatorias fuera de la ventana de 24 h)
+WHATSAPP_TEMPLATE_REVIEW_REQUEST=solicitud_valoracion
+WHATSAPP_TEMPLATE_ALERT=alerta_resena
+WHATSAPP_TEMPLATE_LANG=es
+# RGPD: sin opt-in registrado no se escribe al cliente
+WHATSAPP_REQUIRE_OPTIN=true
+
+# ---------- TripAdvisor (opcional) ----------
+TRIPADVISOR_PROVIDER=serpapi
+SERPAPI_API_KEY=...
+# OUTSCRAPER_API_KEY=...
+
+# ---------- Cron + Cola (opcional, recomendado) ----------
+CRON_SECRET=cadena-larga-aleatoria-openssl-rand-hex-32
+QSTASH_TOKEN=...
+QSTASH_CURRENT_SIGNING_KEY=sig_...
+QSTASH_NEXT_SIGNING_KEY=sig_...
 
 # ---------- Analítica (opcional) ----------
 # NEXT_PUBLIC_PLAUSIBLE_DOMAIN=tudominio.com
@@ -152,9 +178,10 @@ Reglas de formato: **sin comillas**, **sin espacios** alrededor del `=`, una var
 ### 1.3 Lo que NO va en el `.env`
 
 Se configura **por empresa** desde el panel (`/dashboard` → pestaña *Empresa*), cifrado y aislado
-por tenant: API key de **Trustpilot** + Business Unit ID, **Place ID** de Google Maps, móvil de
-alertas, tono de la IA, credenciales de **Shopify / WooCommerce / TPV** y la `api_key` de la API
-pública de ingesta.
+por tenant: API key de **Trustpilot** + Business Unit ID, **Location ID** de TripAdvisor,
+**Place ID** de Google Maps, móvil de alertas, tono de la IA, credenciales de
+**Shopify / WooCommerce / TPV** y la `api_key` de la API pública de ingesta.
+Las URLs públicas del embudo (TripAdvisor/Trustpilot) van en la pestaña *Embudo*.
 
 ---
 
@@ -168,8 +195,8 @@ pública de ingesta.
    - **Proyecto existente** (vienes de v3.4.0 o anterior) → ejecuta en orden
      `supabase/migration_3_2_0.sql` → `migration_3_3_0.sql` → `migration_3_4_0.sql` →
      `migration_3_5_0.sql` → `migration_3_6_0.sql` → `migration_3_7_0.sql` → `migration_3_8_0.sql` →
-     **`migration_3_9_0.sql`** (modelo 100 % de pago: planes `pro|business` y estados
-     `inactive`/`paused`; migra sola las filas legacy/gratuitas a Pro)
+     `migration_3_9_0.sql` (modelo 100 % de pago) → **`migration_3_10_0.sql`** (TripAdvisor,
+     opt-ins WhatsApp, Embudo Privado, `job_id` de IA async)
      (todas idempotentes: puedes re-ejecutarlas sin romper nada).
 4. **Pool de conexiones (recomendado)**: Project Settings → **Database → Connection string →
    Connection pooling** → copia la URI del **puerto 6543** (Supavisor, modo *transaction*) a
@@ -179,9 +206,12 @@ pública de ingesta.
    el usuario entra directamente tras registrarse).
 5. Auth → **URL Configuration**: `Site URL` = tu `NEXT_PUBLIC_APP_URL` y añade
    `https://tudominio.com/**` a *Redirect URLs*.
-6. Verifica que la migración 3.9.0 dejó:
+6. Verifica que las migraciones 3.9.0 y 3.10.0 dejaron:
    - `tenants.plan` aceptando **solo `pro | business`** (las filas legacy o gratuitas migran
      solas al plan de pago equivalente; sin plan gratuito).
+   - `reviews.source` aceptando `tripadvisor` (+ `places`), `integrations.provider` aceptando
+     `tripadvisor`, y tablas nuevas `whatsapp_optins`, `whatsapp_contacts`,
+     `feedback_responses` (+ columna `job_id` en `ai_interactions`).
    - `tenants.subscription_status` aceptando `trialing | active | past_due | canceled | inactive | paused | none`
      (`inactive` = baja inmediata por webhook; `paused` = Stripe pausó el cobro del día 8).
    - Columnas de recargas: `extra_requests`, `extra_reviews`, `extra_ai`, `extra_syncs`,
@@ -210,6 +240,8 @@ pública de ingesta.
 
    Sin `pg_cron` no pasa nada: la app detecta los extras caducados y purga lo que exceda los
    topes de cada plan en cada lectura de cuota (`checkQuota`).
+   (El cron de *sincronizaciones* es aparte: Vercel Cron o pg_cron contra
+   `/api/cron/sync-reviews`; ver §12.)
 
 ---
 
@@ -363,10 +395,17 @@ Cada mensaje enviado consume **1 evento** del contador `whatsapp`.
    (ese token no caduca).
 6. **Destino de las alertas**: en el panel → *Empresa* → pega el móvil del negocio **con prefijo
    internacional y sin `+`** (ej. `34612345678`) → **Guardar** → **Probar envío real**.
-7. **Webhook entrante de Meta**: esta versión solo **envía** mensajes (alertas ≤3★ y peticiones
-   de valoración post-venta); no procesa respuestas entrantes. Por eso `WHATSAPP_VERIFY_TOKEN` es
-   opcional: queda reservado por si más adelante activas el Callback URL en
-   App Dashboard → WhatsApp → **Configuration**.
+7. **Webhook entrante de Meta** (ventana de 24 h + bajas STOP): App Dashboard → WhatsApp →
+   **Configuration** → Callback URL `https://tudominio.com/api/integrations/whatsapp/webhook`,
+   Verify Token = tu `WHATSAPP_VERIFY_TOKEN`, campo `messages` suscrito. Cada mensaje entrante
+   del cliente abre 24 h de texto libre; si escribe STOP/BAJA, su opt-in se revoca solo.
+8. **Plantillas HSM** (obligatorias fuera de la ventana de 24 h): crea y envía a aprobación
+   `solicitud_valoracion` ({{1}} nombre · {{2}} pedido · {{3}} negocio · {{4}} URL) y
+   `alerta_resena` (aviso interno), categoría UTILITY, idioma `es` → variables
+   `WHATSAPP_TEMPLATE_*` (textos exactos en [GUIA_AUTOMATIZACION §3](../GUIA_AUTOMATIZACION.md)).
+9. **Opt-in RGPD del checkout**: añade el checkbox «Acepto recibir por WhatsApp…» y guarda
+   `whatsapp_optin` en el pedido (Shopify note_attributes / Woo meta_data / API `whatsapp_optin`).
+   Sin consentimiento registrado (`WHATSAPP_REQUIRE_OPTIN=true`), el WhatsApp post-venta no sale.
 
 ---
 
@@ -391,7 +430,7 @@ Cada mensaje enviado consume **1 evento** del contador `whatsapp`.
    redespliega.
 7. En el panel → *Empresa* → **Conectar con Google** → autoriza con la cuenta propietaria de la
    ficha → **Sincronizar reseñas**.
-8. Cada sincronización consume llamadas de `google_calls` (límite por plan: 20 / 60 / 200 al mes)
+8. Cada sincronización consume 1 unidad de `syncs` (límite por plan: 120 / 720 al mes)
    y cada reseña importada consume **1 evento** de la cuota `reviews`.
 
 ### 7.2 Places API (New) — clave de servidor, opcional
@@ -486,7 +525,7 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
    npm run start       # o `npm run dev`
    ```
 
-2. `GET /api/health?verbose=1` → `version: "3.9.0"` y todas las integraciones que configuraste en
+2. `GET /api/health?verbose=1` → `version: "3.10.0"` y todas las integraciones que configuraste en
    verde (`configured: true`). Si añadiste `DATABASE_URL`, comprueba también `GET /api/health?db=1`.
    Atajo: `npm run verify` lo revisa todo, incluida la firma del webhook de Stripe.
 3. Panel interno (`/admin`, privado) → **sin** banner de modo demo; pestaña *Sistema* con todas
@@ -500,6 +539,8 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 6. **Flujo de triaje**: fuerza una reseña de ≤3★ → aparece en la cola privada con análisis de la
    reclamación, mensaje conciliador privado y nota interna; si configuraste WhatsApp, llega la
    alerta al móvil.
+7. **Flujo de embudo**: abre `/valorar/TU-SLUG` → vota 5★ (botones públicos + clic medido) y
+   2★ con mensaje (ticket privado en pestaña *Embudo* + email/WhatsApp al dueño).
 8. **Flujo de cuota**: observa el medidor de `/dashboard` (y la pestaña *Cuotas y extras* del
    panel interno). Al llegar al 100 % las APIs responden `429` con cabecera `Retry-After` y el
    panel ofrece la recarga sugerida; al comprarla, la capacidad sube al instante.
@@ -532,5 +573,28 @@ La web **no** incluye testimonios inventados (prohibido por la Dir. (UE) 2019/21
 | El cliente ve `429 token_budget_exhausted` | Agotó el presupuesto de tokens de su plan | Ofrécele la recarga `+500 respuestas IA` (15 €) o sube de plan; se reinicia el día 1. |
 | Se agotan las conexiones de Postgres | `DATABASE_URL` apunta al host directo, no al pooler | Usa la cadena del puerto **6543** (Supavisor, transaction) y ajusta `DATABASE_POOL_MAX`. |
 | Webhook con `400 Firma inválida` | `whsec_…` de otro endpoint o de otro modo | `GET /api/stripe/webhook` muestra el modo y las pistas, y `npm run verify` valida la firma. |
+| Cron `/api/cron/sync-reviews` → 401/503 | Falta `CRON_SECRET` en el hosting | Créalo (Vercel lo envía solo); prueba con `curl -H "Authorization: Bearer …"`. |
+| WhatsApp: plantilla error `131047/132000` | Plantilla no aprobada o nombre distinto al `.env` | Revisa el nombre EXACTO e idioma en Meta → Message Templates y espera la aprobación. |
+| Pedido entregado `skipped: 'no-optin'` | El checkout no envió `whatsapp_optin: true` | Añade el checkbox al checkout (§6.9) o registra el opt-in manual desde el panel. |
+| `/valorar/slug` → 404 | Embudo desactivado o suscripción sin acceso | Actívalo en pestaña *Embudo*; el enlace exige suscripción usable (sin free-riding). |
+| IA async siempre `pending` | Worker/cola sin firmar o BD sin `job_id` | Ejecuta `migration_3_10_0.sql`; revisa signing keys de QStash y `/admin → Logs`. |
+
+---
+
+## 12. Automatización v3.10.0 (cron, cola, TripAdvisor y embudo)
+
+Todo funciona sin esto (en línea/manual), pero para vender con volumen configúralo.
+Detalle completo en [GUIA_AUTOMATIZACION.md](../GUIA_AUTOMATIZACION.md); aquí solo tu checklist:
+
+- [ ] **TripAdvisor**: cuenta SerpAPI u Outscraper → `TRIPADVISOR_PROVIDER` + API key → cada
+  empresa pega su Location ID (`dXXXXXX`) en el panel → *Empresa* → Sincronizar.
+- [ ] **Cron de syncs**: genera `CRON_SECRET` (`openssl rand -hex 32`) → pégalo en el hosting
+  (Vercel Cron lo envía solo gracias a `vercel.json`; fuera de Vercel usa pg_cron, snippet en
+  `migration_3_10_0.sql` §8) → prueba con `curl -H "Authorization: Bearer …"` → `enqueued > 0`.
+- [ ] **Cola QStash**: cuenta en Upstash → `QSTASH_TOKEN` + 2 signing keys → a partir de ahí,
+  entregas, IAs async, WhatsApps y syncs van en segundo plano con reintentos.
+- [ ] **Plantillas HSM + webhook entrante + opt-in**: §6 pasos 7–9 de esta guía.
+- [ ] **Embudo**: pestaña *Embudo* → copia `/valorar/TU-SLUG` (QR, ticket, web) → pega tus URLs
+  públicas de TripAdvisor/Trustpilot (Google sale del Place ID) → prueba 5★ y 2★.
 
 🎉 Hecho: altas de pago con trial, cobros, cuotas, recargas, empresas e integraciones funcionan solos; el panel interno sirve para supervisarlos. Para vender al público, completa [GUIA_COMERCIALIZACION.md](../GUIA_COMERCIALIZACION.md).

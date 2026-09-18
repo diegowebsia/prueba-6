@@ -1,4 +1,4 @@
-# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.9.0)
+# 🛡️ GUIA_ADMIN.md — Manual del dueño (ReviewFlow AI v3.10.0)
 
 Todo lo que necesitas para **operar tu SaaS día a día**: planes, cobros, cuotas,
 protección de la base de datos, soporte y mantenimiento. Cero código.
@@ -27,6 +27,8 @@ protección de la base de datos, soporte y mantenimiento. Cero código.
 | Email · Google Business/Places · IA | ✅ | ✅ |
 | WhatsApp (peticiones y alertas) | ✅ | ✅ |
 | Trustpilot · publicar en Google | ✅ | ✅ |
+| TripAdvisor (vía SerpAPI/Outscraper) | ✅ | ✅ |
+| Embudo privado `/valorar` (4-5★ públicos, 1-3★ a ticket) | ✅ | ✅ |
 | Shopify / Woo / TPV + WhatsApp al entregar | ❌ | ✅ |
 | Soporte | Email | Prioritario |
 | Opiniones guardadas (tope BD) | 5.000 | 25.000 |
@@ -70,6 +72,12 @@ consumo de **tokens de IA** y el coste estimado del ciclo, y en el diagnóstico
 interno tienes `GET /api/admin/db` (latencia, conexiones, tamaño por tabla) y
 `GET /api/ai` (estado del motor de IA).
 
+Extra de v3.10.0: sincronizaciones **automáticas por cron** (Business cada hora, Pro cada
+6 h; de noche no tocas nada), trabajos en **cola QStash** con reintentos (o en línea si no
+la configuras), **opt-ins de WhatsApp** por cliente (RGPD), pestaña **Embudo** con tickets
+1-3★ y avisos al dueño, e IA **asíncrona** (`GET /api/ai/result?jobId=`). Todo deja rastro
+en *Logs* (`cron.sync`, `queue.*`, `feedback.ticket`, `whatsapp.optin`).
+
 Acciones por cliente (··· en su fila): **cambiar plan** (Pro/Business),
 **suspender/reactivar** (el suspendido pierde el acceso al instante), **ver email del dueño**.
 
@@ -89,7 +97,7 @@ SQL con `purge_tenant()` / `purge_all_tenants()` como segunda red de seguridad).
 |---|---|---|---|
 | `reviews` | Opiniones importadas/creadas (texto + respuesta + estado) | **5.000 filas** | **25.000 filas** |
 | `quota_events` | Historial/auditoría de consumo (1 fila por operación) | **10.000 filas · 180 días** | **50.000 filas · 365 días** |
-| `integrations` | Conexiones activas (Google, Trustpilot, WhatsApp, tienda) | **6** | **20** |
+| `integrations` | Conexiones activas (Google, Trustpilot, TripAdvisor, WhatsApp, tienda) | **6** | **20** |
 | `ai_interactions` | Contabilidad de cada llamada de IA (tokens, coste, latencia) | **20.000 filas · 180 días** | **100.000 filas · 365 días** |
 | `system_logs` | Logs técnicos de la instancia (tabla compartida) | 365 días (purga global) | 365 días |
 | Almacenamiento activo estimado | `reviews` + `quota_events` + `integrations` | **2 GB (2.048 MB)** | **10 GB (10.240 MB)** |
@@ -276,7 +284,7 @@ Tu trabajo es mirar `/admin → Suscripciones` una vez por semana.
 
 1. **Suscripciones:** ¿pruebas que acaban en 3 días? Escríbeles (plantilla abajo). ¿`past_due`? Comprueba si Stripe reintentó; si lleva +7 días, contacta.
 2. **Empresas nuevas:** bienvenida personal por email (convierte mucho los primeros 100 clientes).
-3. **Logs:** busca `error` o webhooks fallidos. Un webhook de Stripe en rojo = cliente pagando sin acceso (§9).
+3. **Logs:** busca `error` o webhooks fallidos. Un webhook de Stripe en rojo = cliente pagando sin acceso (§9). Mira también `cron.sync` (¿encola cada hora?), `queue.*` (¿reintentos?) y `feedback.ticket` (¿tickets sin resolver?).
 4. **MRR:** anota tu MRR semanal. Objetivo sano: churn < 5 %/mes.
 
 **Plantilla de prueba por caducar:**
@@ -298,7 +306,10 @@ Tu trabajo es mirar `/admin → Suscripciones` una vez por semana.
 | «He cambiado de tarjeta» | Portal de Stripe | Autoservicio |
 | «Quiero darme de baja» | Portal de Stripe → cancelar | Acceso hasta fin de periodo; datos 30 días (avísale) |
 | «He superado las opiniones guardadas» | `/admin` → *Cuotas y extras* | Explicar la purga de las más antiguas + ofrecer recarga de opiniones o plan superior |
-| «Mi tienda no envía WhatsApps» | Su panel → Tienda | Verificar secreto del webhook y que el pedido esté «Entregado/Completado» |
+| «Mi tienda no envía WhatsApps» | Su panel → Tienda | Verificar secreto del webhook, que el pedido esté «Entregado/Completado» **y que haya opt-in** (`skipped: 'no-optin'` en Logs = falta el checkbox del checkout) |
+| «No me llegan las opiniones de TripAdvisor» | Su panel → empresa → TripAdvisor | Revisar Location ID (`dXXXXXX`), `SERPAPI_API_KEY`/`OUTSCRAPER_API_KEY` en el servidor y cuota `syncs` |
+| «WhatsApp da error de plantilla (131047)» | Meta → Message Templates | El nombre del `.env` debe ser EXACTO al aprobado (idioma `es`); fuera de la ventana de 24 h el texto libre lo rechaza Meta |
+| «Mi enlace /valorar no funciona» | Su panel → *Embudo* | El embudo debe estar activo **y** la suscripción usable; sin suscripción el enlace devuelve 404 (sin free-riding) |
 | «La IA me da respuestas muy genéricas» | `/admin` → *Logs* (fuente `ai.*`) y `ai_interactions` | Si hay `ok = false`, la clave/saldo de OpenAI está fallando: el sistema usó la plantilla local |
 | «¿Por qué me dice que no tengo tokens de IA?» | `/admin` → *Cuotas y extras* (columna de IA) | Ha agotado el presupuesto del plan: ofrécele `+500 respuestas IA` (15 €) o el plan superior |
 
@@ -326,7 +337,8 @@ Cambios de plan/estado, desde `/admin` o deja que el webhook lo haga.
 - **ARPU con recargas:** las recargas de 6–15 € suben el ticket medio sin subir el churn.
 - **Churn:** cancelados ÷ clientes a inicio de mes. Sano < 5 %.
 - **Costes fijos típicos:** hosting 5–25 € + Supabase 0–25 $ + dominio ~1 €/mes + SMTP 0–9 €.
-  Con **10 clientes Pro** (~290 €) cubres toda la infraestructura.
+  Opcionales de automatización: SerpAPI ~50–150 $/mes (TripAdvisor), QStash gratis/hobby,
+  WhatsApp por conversación. Con **10 clientes Pro** (~290 €) cubres toda la infraestructura.
 - **Conversión trial → pago:** mide cuántos trials llegan a `active` el día 8; si baja, revisa el email de bienvenida, el recordatorio del día 4 y la fricción del onboarding.
 
-¡A vender! 🚀 Para cambios legales/fiscales del negocio, revisa [GUIA_PASOS_MANUALES.md](./GUIA_PASOS_MANUALES.md).
+¡A vender! 🚀 Para cambios legales/fiscales del negocio, revisa [GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md); para activar cron, cola, plantillas y embudo, [GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md).

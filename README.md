@@ -85,7 +85,6 @@ POST /api/ai
 | **[GUIA_GRATIS.md](./GUIA_GRATIS.md)** 🆓 | Explicación comercial de los 2 planes + montar el proyecto gratis (Vercel + Supabase + Stripe **test** + Brevo) | **0 €** |
 | **[GUIA_DESPLIEGUE.md](./GUIA_DESPLIEGUE.md)** 🚀 | Desplegar desde cero (dominio, DNS, SSL, Docker) | Según host |
 | **[GUIA_ADMIN.md](./GUIA_ADMIN.md)** 🛡️ | Manual del dueño: planes, cuotas, **topes de BD por plan**, purga, cobros y operación diaria | — |
-| **[docs/GUIA_GENERAL.md](./docs/GUIA_GENERAL.md)** 🌍 | Publicar en producción en **cualquier host** | Según host |
 | **[docs/GUIA_PASOS_MANUALES.md](./docs/GUIA_PASOS_MANUALES.md)** 🧑‍💻 | **Lista exacta de credenciales**, formato del `.env`, productos de Stripe, Supabase, OpenAI, Meta WhatsApp, Google y troubleshooting | — |
 | **[GUIA_COMERCIALIZACION.md](./GUIA_COMERCIALIZACION.md)** 💰 | **Todo lo que TÚ debes aportar para vender al público**: empresa, dominio, Stripe live, SMTP, marca, integraciones en producción, legal RGPD/consumo, seguridad, soporte y checklist go-live | — |
 | **[GUIA_AUTOMATIZACION.md](./GUIA_AUTOMATIZACION.md)** ⚙️ | Cron + QStash + plantillas HSM + opt-in RGPD + Embudo Privado: qué configurar y dónde | — |
@@ -235,7 +234,7 @@ Registro → /bienvenido (2 planes de pago)
 
 ---
 
-## 🎨 Sistema de diseño v3.9.0
+## 🎨 Sistema de diseño v3.10.0
 
 - **Fondo** `#090D16` (`ink-950`) con escala propia `ink-50…950`, acento `brand` (azul #2563eb →
   #5f92fb) y violeta de apoyo; nunca negro puro ni blanco puro.
@@ -305,7 +304,7 @@ Registro → /bienvenido (2 planes de pago)
 │                        demo · site
 ├── supabase/            schema.sql + migration_3_2_0 … migration_3_10_0.sql
 ├── scripts/             verify-launch.mjs (npm run verify)
-├── docs/                GUIA_GENERAL.md · GUIA_PASOS_MANUALES.md (guías extensas, fuera del cliente)
+├── docs/                GUIA_PASOS_MANUALES.md (manual de credenciales, fuera del cliente)
 ├── public/              logo.svg · favicon.svg
 ├── middleware.ts        corte de acceso por plan/suscripción y rol
 └── GUIA_GRATIS / GUIA_DESPLIEGUE / GUIA_ADMIN / GUIA_COMERCIALIZACION / GUIA_AUTOMATIZACION · README.md · CHANGELOG.md
